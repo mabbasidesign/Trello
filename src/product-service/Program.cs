@@ -1,4 +1,5 @@
 using product_service.Models;
+using MiniValidation;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -39,7 +40,10 @@ app.MapGet("/api/products/{id}", (int id) =>
 // POST create product
 app.MapPost("/api/products", (Product product) =>
 {
-    product.Id = products.Max(p => p.Id) + 1;
+    if (!MiniValidator.TryValidate(product, out var errors))
+        return Results.ValidationProblem(errors);
+    
+    product.Id = products.Any() ? products.Max(p => p.Id) + 1 : 1;
     product.CreatedAt = DateTime.UtcNow;
     products.Add(product);
     return Results.Created($"/api/products/{product.Id}", product);
@@ -50,6 +54,9 @@ app.MapPost("/api/products", (Product product) =>
 // PUT update product
 app.MapPut("/api/products/{id}", (int id, Product updatedProduct) =>
 {
+    if (!MiniValidator.TryValidate(updatedProduct, out var errors))
+        return Results.ValidationProblem(errors);
+    
     var product = products.FirstOrDefault(p => p.Id == id);
     if (product is null) return Results.NotFound();
 
