@@ -1,41 +1,79 @@
+using product_service.Models;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-}
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
 
-var summaries = new[]
+// In-memory product list for demo
+var products = new List<Product>
 {
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
+    new() { Id = 1, Name = "Laptop", Description = "High-performance laptop", Price = 999.99m, Stock = 10, CreatedAt = DateTime.UtcNow },
+    new() { Id = 2, Name = "Mouse", Description = "Wireless mouse", Price = 29.99m, Stock = 50, CreatedAt = DateTime.UtcNow },
+    new() { Id = 3, Name = "Keyboard", Description = "Mechanical keyboard", Price = 79.99m, Stock = 25, CreatedAt = DateTime.UtcNow }
 };
 
-app.MapGet("/weatherforecast", () =>
+// GET all products
+app.MapGet("/api/products", () => Results.Ok(products))
+    .WithName("GetProducts")
+    .WithTags("Products");
+
+// GET product by ID
+app.MapGet("/api/products/{id}", (int id) =>
 {
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
+    var product = products.FirstOrDefault(p => p.Id == id);
+    return product is not null ? Results.Ok(product) : Results.NotFound();
 })
-.WithName("GetWeatherForecast");
+.WithName("GetProductById")
+.WithTags("Products");
+
+// POST create product
+app.MapPost("/api/products", (Product product) =>
+{
+    product.Id = products.Max(p => p.Id) + 1;
+    product.CreatedAt = DateTime.UtcNow;
+    products.Add(product);
+    return Results.Created($"/api/products/{product.Id}", product);
+})
+.WithName("CreateProduct")
+.WithTags("Products");
+
+// PUT update product
+app.MapPut("/api/products/{id}", (int id, Product updatedProduct) =>
+{
+    var product = products.FirstOrDefault(p => p.Id == id);
+    if (product is null) return Results.NotFound();
+
+    product.Name = updatedProduct.Name;
+    product.Description = updatedProduct.Description;
+    product.Price = updatedProduct.Price;
+    product.Stock = updatedProduct.Stock;
+    product.UpdatedAt = DateTime.UtcNow;
+
+    return Results.Ok(product);
+})
+.WithName("UpdateProduct")
+.WithTags("Products");
+
+// DELETE product
+app.MapDelete("/api/products/{id}", (int id) =>
+{
+    var product = products.FirstOrDefault(p => p.Id == id);
+    if (product is null) return Results.NotFound();
+
+    products.Remove(product);
+    return Results.NoContent();
+})
+.WithName("DeleteProduct")
+.WithTags("Products");
 
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
