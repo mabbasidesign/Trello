@@ -54,6 +54,10 @@ builder.Services.AddCors(options =>
     });
 });
 
+// Add Health Checks
+builder.Services.AddHealthChecks()
+    .AddDbContextCheck<ApplicationDbContext>("database", tags: new[] { "db", "sql" });
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -182,6 +186,50 @@ productsGroup.MapDelete("{id:int}", async (int id, IProductRepository repository
 .WithSummary("Delete a product")
 .Produces(StatusCodes.Status204NoContent)
 .Produces(StatusCodes.Status404NotFound);
+
+// Health check endpoints
+app.MapHealthChecks("/health", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
+{
+    Predicate = _ => true,
+    ResponseWriter = async (context, report) =>
+    {
+        Log.Information("Health check requested. Status: {Status}", report.Status);
+        
+        context.Response.ContentType = "application/json";
+        var result = System.Text.Json.JsonSerializer.Serialize(new
+        {
+            status = report.Status.ToString(),
+            checks = report.Entries.Select(e => new
+            {
+                name = e.Key,
+                status = e.Value.Status.ToString(),
+                description = e.Value.Description,
+                duration = e.Value.Duration.TotalMilliseconds
+            }),
+            totalDuration = report.TotalDuration.TotalMilliseconds
+        });
+        await context.Response.WriteAsync(result);
+    }
+})
+.WithName("HealthCheck")
+.WithDescription("Returns the health status of the application and its dependencies")
+.WithSummary("Health check endpoint")
+.WithTags("Health");
+
+app.MapHealthChecks("/health/ready", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
+{
+    Predicate = check => check.Tags.Contains("db")
+})
+.WithName("ReadinessCheck")
+.WithDescription("Returns readiness status (database connectivity)")
+.WithSummary("Readiness check")
+.WithTags("Health");
+
+app.MapHealthChecks("/health/live")
+    .WithName("LivenessCheck")
+    .WithDescription("Returns liveness status (application is running)")
+    .WithSummary("Liveness check")
+    .WithTags("Health");
 
     app.Run();
 }
