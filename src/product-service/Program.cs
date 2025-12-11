@@ -1,9 +1,15 @@
 using product_service.Models;
 using product_service.Repositories;
 using product_service.Middleware;
+using product_service.Data;
 using MiniValidation;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Add Database
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultSQLConnection")));
 
 // Add services to the container.
 builder.Services.AddEndpointsApiExplorer();
@@ -16,7 +22,7 @@ builder.Services.AddSwaggerGen(options =>
         Description = "A REST API for managing products in the Trello system"
     });
 });
-builder.Services.AddSingleton<IProductRepository, InMemoryProductRepository>();
+builder.Services.AddScoped<IProductRepository, ProductRepository>();
 
 // Add global exception handler
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
