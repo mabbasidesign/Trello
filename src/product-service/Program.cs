@@ -6,7 +6,15 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new()
+    {
+        Title = "Product Service API",
+        Version = "v1",
+        Description = "A REST API for managing products in the Trello system"
+    });
+});
 builder.Services.AddSingleton<IProductRepository, InMemoryProductRepository>();
 
 // Add CORS
@@ -36,7 +44,10 @@ app.MapGet("/api/products", async (IProductRepository repository) =>
     return Results.Ok(products);
 })
     .WithName("GetProducts")
-    .WithTags("Products");
+    .WithDescription("Retrieves a list of all available products")
+    .WithSummary("Get all products")
+    .WithTags("Products")
+    .Produces<IEnumerable<Product>>(StatusCodes.Status200OK);
 
 // GET product by ID
 app.MapGet("/api/products/{id}", async (int id, IProductRepository repository) =>
@@ -45,7 +56,11 @@ app.MapGet("/api/products/{id}", async (int id, IProductRepository repository) =
     return product is not null ? Results.Ok(product) : Results.NotFound();
 })
 .WithName("GetProductById")
-.WithTags("Products");
+.WithDescription("Retrieves a specific product by its unique identifier")
+.WithSummary("Get product by ID")
+.WithTags("Products")
+.Produces<Product>(StatusCodes.Status200OK)
+.Produces(StatusCodes.Status404NotFound);
 
 // POST create product
 app.MapPost("/api/products", async (Product product, IProductRepository repository) =>
@@ -57,7 +72,11 @@ app.MapPost("/api/products", async (Product product, IProductRepository reposito
     return Results.Created($"/api/products/{createdProduct.Id}", createdProduct);
 })
 .WithName("CreateProduct")
-.WithTags("Products");
+.WithDescription("Creates a new product with the provided details")
+.WithSummary("Create a new product")
+.WithTags("Products")
+.Produces<Product>(StatusCodes.Status201Created)
+.ProducesValidationProblem();
 
 // PUT update product
 app.MapPut("/api/products/{id}", async (int id, Product updatedProduct, IProductRepository repository) =>
@@ -69,7 +88,12 @@ app.MapPut("/api/products/{id}", async (int id, Product updatedProduct, IProduct
     return product is not null ? Results.Ok(product) : Results.NotFound();
 })
 .WithName("UpdateProduct")
-.WithTags("Products");
+.WithDescription("Updates all fields of an existing product")
+.WithSummary("Update an existing product")
+.WithTags("Products")
+.Produces<Product>(StatusCodes.Status200OK)
+.Produces(StatusCodes.Status404NotFound)
+.ProducesValidationProblem();
 
 // DELETE product
 app.MapDelete("/api/products/{id}", async (int id, IProductRepository repository) =>
@@ -78,6 +102,10 @@ app.MapDelete("/api/products/{id}", async (int id, IProductRepository repository
     return deleted ? Results.NoContent() : Results.NotFound();
 })
 .WithName("DeleteProduct")
-.WithTags("Products");
+.WithDescription("Permanently deletes a product by its ID")
+.WithSummary("Delete a product")
+.WithTags("Products")
+.Produces(StatusCodes.Status204NoContent)
+.Produces(StatusCodes.Status404NotFound);
 
 app.Run();
