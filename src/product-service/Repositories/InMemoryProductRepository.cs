@@ -11,10 +11,20 @@ public class InMemoryProductRepository : IProductRepository
         new() { Id = 3, Name = "Keyboard", Description = "Mechanical keyboard", Price = 79.99m, Stock = 25, CreatedAt = DateTime.UtcNow }
     };
 
-    public Task<PagedResult<Product>> GetAllAsync(int page = 1, int pageSize = 10)
+    public Task<PagedResult<Product>> GetAllAsync(int page = 1, int pageSize = 10, string? searchTerm = null)
     {
-        var totalCount = _products.Count;
-        var items = _products
+        var query = _products.AsEnumerable();
+
+        // Apply search filter if provided
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            query = query.Where(p => 
+                p.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                (p.Description != null && p.Description.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)));
+        }
+
+        var totalCount = query.Count();
+        var items = query
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToList();

@@ -43,18 +43,18 @@ app.UseSwaggerUI();
 app.UseCors("AllowAll");
 app.UseHttpsRedirection();
 
-// GET all products with pagination
-app.MapGet("/api/products", async (IProductRepository repository, int page = 1, int pageSize = 10) =>
+// GET all products with pagination and search
+app.MapGet("/api/products", async (IProductRepository repository, int page = 1, int pageSize = 10, string? search = null) =>
 {
     if (page < 1) page = 1;
     if (pageSize < 1 || pageSize > 100) pageSize = 10;
     
-    var pagedProducts = await repository.GetAllAsync(page, pageSize);
+    var pagedProducts = await repository.GetAllAsync(page, pageSize, search);
     return Results.Ok(pagedProducts);
 })
     .WithName("GetProducts")
-    .WithDescription("Retrieves a paginated list of products. Use 'page' and 'pageSize' query parameters.")
-    .WithSummary("Get all products (paginated)")
+    .WithDescription("Retrieves a paginated list of products. Use 'page', 'pageSize', and 'search' query parameters.")
+    .WithSummary("Get all products (paginated with search)")
     .WithTags("Products")
     .Produces<PagedResult<Product>>(StatusCodes.Status200OK);
 
