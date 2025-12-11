@@ -2,6 +2,7 @@ using order_service.Models;
 using order_service.Repositories;
 using order_service.Middleware;
 using order_service.Data;
+using OrderService.Messaging;
 using MiniValidation;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
@@ -54,6 +55,23 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+
+// Add Service Bus Publisher
+builder.Services.AddSingleton<IMessagePublisher>(sp =>
+{
+    var connectionString = builder.Configuration["ServiceBus:ConnectionString"] ?? throw new InvalidOperationException("ServiceBus connection string not configured");
+    var logger = sp.GetRequiredService<ILogger<ServiceBusPublisher>>();
+    return new ServiceBusPublisher(connectionString, logger);
+});
+
+// Add Product Event Consumer (background service)
+builder.Services.AddHostedService<ProductEventConsumer>(sp =>
+{
+    var connectionString = builder.Configuration["ServiceBus:ConnectionString"] ?? throw new InvalidOperationException("ServiceBus connection string not configured");
+    var queueName = builder.Configuration["ServiceBus:ProductsQueue"] ?? throw new InvalidOperationException("Products queue name not configured");
+    var logger = sp.GetRequiredService<ILogger<ProductEventConsumer>>();
+    return new ProductEventConsumer(connectionString, queueName, logger);
+});
 
 // Add global exception handler
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
@@ -136,7 +154,7 @@ ordersGroupV1.MapGet("{id:int}", async (int id, IOrderRepository repository) =>
 .Produces(StatusCodes.Status404NotFound);
 
 // POST create order
-ordersGroupV1.MapPost("", async (Order order, IOrderRepository repository) =>
+ordersGroupV1.MapPost("", async (Order order, IOrderRepository repository, IMessagePublisher messagePublisher) =>
 {
     Log.Information("Creating new order for customer: {CustomerName}", order.CustomerName);
     
@@ -149,6 +167,25 @@ ordersGroupV1.MapPost("", async (Order order, IOrderRepository repository) =>
     var createdOrder = await repository.CreateAsync(order);
     Log.Information("Order created successfully: ID={OrderId}, Customer={CustomerName}, Total={TotalAmount}", 
         createdOrder.Id, createdOrder.CustomerName, createdOrder.TotalAmount);
+    
+    // Publish order created event
+    var orderEvent = new OrderService.Messaging.Events.OrderCreatedEvent
+    {
+        OrderId = createdOrder.Id,
+        CustomerName = createdOrder.CustomerName,
+        TotalAmount = createdOrder.TotalAmount,
+        CreatedAt = DateTime.UtcNow,
+        Items = createdOrder.OrderItems.Select(item => new OrderService.Messaging.Events.OrderItemInfo
+        {
+            ProductId = item.ProductId,
+            Quantity = item.Quantity,
+            UnitPrice = item.UnitPrice
+        }).ToList()
+    };
+    await messagePublisher.PublishAsync(builder.Configuration["ServiceBus:OrdersQueue"]!, orderEvent);
+    
+    // Also publish to topic for notifications
+    await messagePublisher.PublishAsync(builder.Configuration["ServiceBus:OrderNotificationsTopic"]!, orderEvent);
     
     return Results.Created($"/api/orders/{createdOrder.Id}", createdOrder);
 })
@@ -189,15 +226,27 @@ ordersGroupV1.MapPut("{id:int}", async (int id, Order updatedOrder, IOrderReposi
 .ProducesValidationProblem();
 
 // PATCH update order status
-ordersGroupV1.MapPatch("{id:int}/status", async (int id, string status, IOrderRepository repository) =>
+ordersGroupV1.MapPatch("{id:int}/status", async (int id, string status, IOrderRepository repository, IMessagePublisher messagePublisher) =>
 {
     Log.Information("Updating order status: ID={OrderId}, NewStatus={Status}", id, status);
     
-    var order = await repository.UpdateStatusAsync(id, status);
+    var (order, oldStatus) = await repository.UpdateStatusAsync(id, status);
     
     if (order is not null)
     {
-        Log.Information("Order status updated successfully: ID={OrderId}, Status={Status}", order.Id, order.Status);
+        Log.Information("Order status updated successfully: ID={OrderId}, OldStatus={OldStatus}, NewStatus={NewStatus}", 
+            order.Id, oldStatus, order.Status);
+        
+        // Publish status change event to topic for notifications
+        var statusEvent = new OrderService.Messaging.Events.OrderStatusChangedEvent
+        {
+            OrderId = order.Id,
+            OldStatus = oldStatus ?? "Unknown",
+            NewStatus = order.Status,
+            ChangedAt = DateTime.UtcNow
+        };
+        await messagePublisher.PublishAsync(builder.Configuration["ServiceBus:OrderNotificationsTopic"]!, statusEvent);
+        
         return Results.Ok(order);
     }
     

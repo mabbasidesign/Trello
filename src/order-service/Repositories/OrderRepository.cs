@@ -91,11 +91,12 @@ public class OrderRepository : IOrderRepository
         return true;
     }
 
-    public async Task<Order?> UpdateStatusAsync(int id, string status)
+    public async Task<(Order? order, string? oldStatus)> UpdateStatusAsync(int id, string status)
     {
         var order = await _context.Orders.FindAsync(id);
-        if (order == null) return null;
+        if (order == null) return (null, null);
 
+        var oldStatus = order.Status;
         order.Status = status;
         order.UpdatedAt = DateTime.UtcNow;
 
@@ -105,6 +106,6 @@ public class OrderRepository : IOrderRepository
         }
 
         await _context.SaveChangesAsync();
-        return order;
+        return (order, oldStatus);
     }
 }

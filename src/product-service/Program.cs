@@ -2,6 +2,7 @@ using product_service.Models;
 using product_service.Repositories;
 using product_service.Middleware;
 using product_service.Data;
+using ProductService.Messaging;
 using MiniValidation;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
@@ -54,6 +55,14 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
+
+// Add Service Bus Publisher
+builder.Services.AddSingleton<IMessagePublisher>(sp =>
+{
+    var connectionString = builder.Configuration["ServiceBus:ConnectionString"] ?? throw new InvalidOperationException("ServiceBus connection string not configured");
+    var logger = sp.GetRequiredService<ILogger<ServiceBusPublisher>>();
+    return new ServiceBusPublisher(connectionString, logger);
+});
 
 // Add global exception handler
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
@@ -136,7 +145,7 @@ productsGroupV1.MapGet("{id:int}", async (int id, IProductRepository repository)
 .Produces(StatusCodes.Status404NotFound);
 
 // POST create product
-productsGroupV1.MapPost("", async (Product product, IProductRepository repository) =>
+productsGroupV1.MapPost("", async (Product product, IProductRepository repository, IMessagePublisher messagePublisher) =>
 {
     Log.Information("Creating new product: {ProductName}", product.Name);
     
@@ -150,6 +159,16 @@ productsGroupV1.MapPost("", async (Product product, IProductRepository repositor
     Log.Information("Product created successfully: ID={ProductId}, Name={ProductName}, Price={Price}", 
         createdProduct.Id, createdProduct.Name, createdProduct.Price);
     
+    // Publish product created event
+    var productEvent = new ProductService.Messaging.Events.ProductCreatedEvent
+    {
+        ProductId = createdProduct.Id,
+        Name = createdProduct.Name,
+        Price = createdProduct.Price,
+        CreatedAt = DateTime.UtcNow
+    };
+    await messagePublisher.PublishAsync(builder.Configuration["ServiceBus:ProductsQueue"]!, productEvent);
+    
     return Results.Created($"/api/products/{createdProduct.Id}", createdProduct);
 })
 .WithName("CreateProduct")
@@ -159,7 +178,7 @@ productsGroupV1.MapPost("", async (Product product, IProductRepository repositor
 .ProducesValidationProblem();
 
 // PUT update product
-productsGroupV1.MapPut("{id:int}", async (int id, Product updatedProduct, IProductRepository repository) =>
+productsGroupV1.MapPut("{id:int}", async (int id, Product updatedProduct, IProductRepository repository, IMessagePublisher messagePublisher) =>
 {
     Log.Information("Updating product: ID={ProductId}, Name={ProductName}", id, updatedProduct.Name);
     
@@ -175,6 +194,17 @@ productsGroupV1.MapPut("{id:int}", async (int id, Product updatedProduct, IProdu
     {
         Log.Information("Product updated successfully: ID={ProductId}, Name={ProductName}, Price={Price}", 
             product.Id, product.Name, product.Price);
+        
+        // Publish product updated event
+        var productEvent = new ProductService.Messaging.Events.ProductUpdatedEvent
+        {
+            ProductId = product.Id,
+            Name = product.Name,
+            Price = product.Price,
+            UpdatedAt = DateTime.UtcNow
+        };
+        await messagePublisher.PublishAsync(builder.Configuration["ServiceBus:ProductsQueue"]!, productEvent);
+        
         return Results.Ok(product);
     }
     
@@ -189,7 +219,7 @@ productsGroupV1.MapPut("{id:int}", async (int id, Product updatedProduct, IProdu
 .ProducesValidationProblem();
 
 // DELETE product
-productsGroupV1.MapDelete("{id:int}", async (int id, IProductRepository repository) =>
+productsGroupV1.MapDelete("{id:int}", async (int id, IProductRepository repository, IMessagePublisher messagePublisher) =>
 {
     Log.Information("Deleting product: ID={ProductId}", id);
     
@@ -198,6 +228,15 @@ productsGroupV1.MapDelete("{id:int}", async (int id, IProductRepository reposito
     if (deleted)
     {
         Log.Information("Product deleted successfully: ID={ProductId}", id);
+        
+        // Publish product deleted event
+        var productEvent = new ProductService.Messaging.Events.ProductDeletedEvent
+        {
+            ProductId = id,
+            DeletedAt = DateTime.UtcNow
+        };
+        await messagePublisher.PublishAsync(builder.Configuration["ServiceBus:ProductsQueue"]!, productEvent);
+        
         return Results.NoContent();
     }
     
