@@ -1,4 +1,5 @@
 using product_service.Models;
+using product_service.Repositories;
 using MiniValidation;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -6,6 +7,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddSingleton<IProductRepository, InMemoryProductRepository>();
 
 var app = builder.Build();
 
@@ -15,70 +17,53 @@ app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
 
-// In-memory product list for demo
-var products = new List<Product>
-{
-    new() { Id = 1, Name = "Laptop", Description = "High-performance laptop", Price = 999.99m, Stock = 10, CreatedAt = DateTime.UtcNow },
-    new() { Id = 2, Name = "Mouse", Description = "Wireless mouse", Price = 29.99m, Stock = 50, CreatedAt = DateTime.UtcNow },
-    new() { Id = 3, Name = "Keyboard", Description = "Mechanical keyboard", Price = 79.99m, Stock = 25, CreatedAt = DateTime.UtcNow }
-};
-
 // GET all products
-app.MapGet("/api/products", () => Results.Ok(products))
+app.MapGet("/api/products", async (IProductRepository repository) =>
+{
+    var products = await repository.GetAllAsync();
+    return Results.Ok(products);
+})
     .WithName("GetProducts")
     .WithTags("Products");
 
 // GET product by ID
-app.MapGet("/api/products/{id}", (int id) =>
+app.MapGet("/api/products/{id}", async (int id, IProductRepository repository) =>
 {
-    var product = products.FirstOrDefault(p => p.Id == id);
+    var product = await repository.GetByIdAsync(id);
     return product is not null ? Results.Ok(product) : Results.NotFound();
 })
 .WithName("GetProductById")
 .WithTags("Products");
 
 // POST create product
-app.MapPost("/api/products", (Product product) =>
+app.MapPost("/api/products", async (Product product, IProductRepository repository) =>
 {
     if (!MiniValidator.TryValidate(product, out var errors))
         return Results.ValidationProblem(errors);
     
-    product.Id = products.Any() ? products.Max(p => p.Id) + 1 : 1;
-    product.CreatedAt = DateTime.UtcNow;
-    products.Add(product);
-    return Results.Created($"/api/products/{product.Id}", product);
+    var createdProduct = await repository.CreateAsync(product);
+    return Results.Created($"/api/products/{createdProduct.Id}", createdProduct);
 })
 .WithName("CreateProduct")
 .WithTags("Products");
 
 // PUT update product
-app.MapPut("/api/products/{id}", (int id, Product updatedProduct) =>
+app.MapPut("/api/products/{id}", async (int id, Product updatedProduct, IProductRepository repository) =>
 {
     if (!MiniValidator.TryValidate(updatedProduct, out var errors))
         return Results.ValidationProblem(errors);
     
-    var product = products.FirstOrDefault(p => p.Id == id);
-    if (product is null) return Results.NotFound();
-
-    product.Name = updatedProduct.Name;
-    product.Description = updatedProduct.Description;
-    product.Price = updatedProduct.Price;
-    product.Stock = updatedProduct.Stock;
-    product.UpdatedAt = DateTime.UtcNow;
-
-    return Results.Ok(product);
+    var product = await repository.UpdateAsync(id, updatedProduct);
+    return product is not null ? Results.Ok(product) : Results.NotFound();
 })
 .WithName("UpdateProduct")
 .WithTags("Products");
 
 // DELETE product
-app.MapDelete("/api/products/{id}", (int id) =>
+app.MapDelete("/api/products/{id}", async (int id, IProductRepository repository) =>
 {
-    var product = products.FirstOrDefault(p => p.Id == id);
-    if (product is null) return Results.NotFound();
-
-    products.Remove(product);
-    return Results.NoContent();
+    var deleted = await repository.DeleteAsync(id);
+    return deleted ? Results.NoContent() : Results.NotFound();
 })
 .WithName("DeleteProduct")
 .WithTags("Products");
