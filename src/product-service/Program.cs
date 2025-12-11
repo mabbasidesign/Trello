@@ -1,5 +1,6 @@
 using product_service.Models;
 using product_service.Repositories;
+using product_service.Middleware;
 using MiniValidation;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -17,6 +18,10 @@ builder.Services.AddSwaggerGen(options =>
 });
 builder.Services.AddSingleton<IProductRepository, InMemoryProductRepository>();
 
+// Add global exception handler
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
+
 // Add CORS
 builder.Services.AddCors(options =>
 {
@@ -31,6 +36,7 @@ builder.Services.AddCors(options =>
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
+app.UseExceptionHandler();
 app.UseSwagger();
 app.UseSwaggerUI();
 
