@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: trello-sqlserver
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=YourStrong@Passw0rd
+      - MSSQL_PID=Express
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+    networks:
+      - trello-network
+    healthcheck:
+      test: /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P YourStrong@Passw0rd -Q "SELECT 1" || exit 1
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+
+  product-service:
+    build:
+      context: ../src/product-service
+      dockerfile: Dockerfile
+    container_name: product-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultSQLConnection=Server=sqlserver;Database=TrelloProducts;User Id=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=true;MultipleActiveResultSets=True
+      - ServiceBus__ConnectionString=${SERVICEBUS_CONNECTION_STRING:-}
+      - ServiceBus__ProductsQueue=products
+      - ServiceBus__OrdersQueue=orders
+      - ServiceBus__OrderNotificationsTopic=order-notifications
+    ports:
+      - "5217:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    networks:
+      - trello-network
+    restart: unless-stopped
+
+  order-service:
+    build:
+      context: ../src/order-service
+      dockerfile: Dockerfile
+    container_name: order-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultSQLConnection=Server=sqlserver;Database=TrelloOrders;User Id=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=true;MultipleActiveResultSets=True
+      - ServiceBus__ConnectionString=${SERVICEBUS_CONNECTION_STRING:-}
+      - ServiceBus__ProductsQueue=products
+      - ServiceBus__OrdersQueue=orders
+      - ServiceBus__OrderNotificationsTopic=order-notifications
+    ports:
+      - "5037:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    networks:
+      - trello-network
+    restart: unless-stopped
+
+volumes:
+  sqlserver-data:
+
+networks:
+  trello-network:
+    driver: bridge

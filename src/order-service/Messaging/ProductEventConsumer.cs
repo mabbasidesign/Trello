@@ -1,6 +1,5 @@
 using Azure.Messaging.ServiceBus;
 using System.Text.Json;
-using ProductService.Messaging.Events;
 
 namespace OrderService.Messaging;
 
@@ -90,12 +89,9 @@ public class ProductEventConsumer : BackgroundService
         await _client.DisposeAsync();
         _logger.LogInformation("Product Event Consumer stopped");
     }
-}
 
-// Copy product event classes to order-service for deserialization
-namespace ProductService.Messaging.Events
-{
-    public class ProductCreatedEvent
+    // Product event classes for deserialization
+    private class ProductCreatedEvent
     {
         public int ProductId { get; set; }
         public string Name { get; set; } = string.Empty;
@@ -103,7 +99,7 @@ namespace ProductService.Messaging.Events
         public DateTime CreatedAt { get; set; }
     }
 
-    public class ProductUpdatedEvent
+    private class ProductUpdatedEvent
     {
         public int ProductId { get; set; }
         public string Name { get; set; } = string.Empty;
@@ -111,7 +107,7 @@ namespace ProductService.Messaging.Events
         public DateTime UpdatedAt { get; set; }
     }
 
-    public class ProductDeletedEvent
+    private class ProductDeletedEvent
     {
         public int ProductId { get; set; }
         public DateTime DeletedAt { get; set; }

@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  order-service:
+    build:
+      context: ../src/order-service
+      dockerfile: Dockerfile
+    container_name: order-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultSQLConnection=Server=sqlserver;Database=TrelloOrders;User Id=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=true;MultipleActiveResultSets=True
+      - ServiceBus__ConnectionString=${SERVICEBUS_CONNECTION_STRING:-}
+      - ServiceBus__ProductsQueue=products
+      - ServiceBus__OrdersQueue=orders
+      - ServiceBus__OrderNotificationsTopic=order-notifications
+    ports:
+      - "5037:8080"
+    networks:
+      - trello-network
+    restart: unless-stopped
+
+networks:
+  trello-network:
+    external: true
+    name: docker_trello-network

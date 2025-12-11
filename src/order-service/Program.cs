@@ -56,22 +56,31 @@ builder.Services.AddSwaggerGen(options =>
 });
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 
-// Add Service Bus Publisher
-builder.Services.AddSingleton<IMessagePublisher>(sp =>
+// Add Service Bus Publisher (optional - only if connection string is configured)
+var serviceBusConnectionString = builder.Configuration["ServiceBus:ConnectionString"];
+if (!string.IsNullOrEmpty(serviceBusConnectionString))
 {
-    var connectionString = builder.Configuration["ServiceBus:ConnectionString"] ?? throw new InvalidOperationException("ServiceBus connection string not configured");
-    var logger = sp.GetRequiredService<ILogger<ServiceBusPublisher>>();
-    return new ServiceBusPublisher(connectionString, logger);
-});
+    builder.Services.AddSingleton<IMessagePublisher>(sp =>
+    {
+        var logger = sp.GetRequiredService<ILogger<ServiceBusPublisher>>();
+        return new ServiceBusPublisher(serviceBusConnectionString, logger);
+    });
 
-// Add Product Event Consumer (background service)
-builder.Services.AddHostedService<ProductEventConsumer>(sp =>
+    // Add Product Event Consumer (background service)
+    builder.Services.AddHostedService<ProductEventConsumer>(sp =>
+    {
+        var queueName = builder.Configuration["ServiceBus:ProductsQueue"] ?? "products";
+        var logger = sp.GetRequiredService<ILogger<ProductEventConsumer>>();
+        return new ProductEventConsumer(serviceBusConnectionString, queueName, logger);
+    });
+    
+    Log.Information("Service Bus messaging enabled");
+}
+else
 {
-    var connectionString = builder.Configuration["ServiceBus:ConnectionString"] ?? throw new InvalidOperationException("ServiceBus connection string not configured");
-    var queueName = builder.Configuration["ServiceBus:ProductsQueue"] ?? throw new InvalidOperationException("Products queue name not configured");
-    var logger = sp.GetRequiredService<ILogger<ProductEventConsumer>>();
-    return new ProductEventConsumer(connectionString, queueName, logger);
-});
+    builder.Services.AddSingleton<IMessagePublisher, NullMessagePublisher>();
+    Log.Warning("Service Bus not configured - messages will not be published");
+}
 
 // Add global exception handler
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
