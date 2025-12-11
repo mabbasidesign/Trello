@@ -49,8 +49,12 @@ app.UseSwaggerUI();
 app.UseCors("AllowAll");
 app.UseHttpsRedirection();
 
+// Group product endpoints
+var productsGroup = app.MapGroup("/api/products")
+    .WithTags("Products");
+
 // GET all products with pagination and search
-app.MapGet("/api/products", async (IProductRepository repository, int page = 1, int pageSize = 10, string? search = null) =>
+productsGroup.MapGet("", async (IProductRepository repository, int page = 1, int pageSize = 10, string? search = null) =>
 {
     if (page < 1) page = 1;
     if (pageSize < 1 || pageSize > 100) pageSize = 10;
@@ -61,11 +65,10 @@ app.MapGet("/api/products", async (IProductRepository repository, int page = 1, 
     .WithName("GetProducts")
     .WithDescription("Retrieves a paginated list of products. Use 'page', 'pageSize', and 'search' query parameters.")
     .WithSummary("Get all products (paginated with search)")
-    .WithTags("Products")
     .Produces<PagedResult<Product>>(StatusCodes.Status200OK);
 
 // GET product by ID
-app.MapGet("/api/products/{id}", async (int id, IProductRepository repository) =>
+productsGroup.MapGet("{id:int}", async (int id, IProductRepository repository) =>
 {
     var product = await repository.GetByIdAsync(id);
     return product is not null ? Results.Ok(product) : Results.NotFound();
@@ -73,12 +76,11 @@ app.MapGet("/api/products/{id}", async (int id, IProductRepository repository) =
 .WithName("GetProductById")
 .WithDescription("Retrieves a specific product by its unique identifier")
 .WithSummary("Get product by ID")
-.WithTags("Products")
 .Produces<Product>(StatusCodes.Status200OK)
 .Produces(StatusCodes.Status404NotFound);
 
 // POST create product
-app.MapPost("/api/products", async (Product product, IProductRepository repository) =>
+productsGroup.MapPost("", async (Product product, IProductRepository repository) =>
 {
     if (!MiniValidator.TryValidate(product, out var errors))
         return Results.ValidationProblem(errors);
@@ -89,12 +91,11 @@ app.MapPost("/api/products", async (Product product, IProductRepository reposito
 .WithName("CreateProduct")
 .WithDescription("Creates a new product with the provided details")
 .WithSummary("Create a new product")
-.WithTags("Products")
 .Produces<Product>(StatusCodes.Status201Created)
 .ProducesValidationProblem();
 
 // PUT update product
-app.MapPut("/api/products/{id}", async (int id, Product updatedProduct, IProductRepository repository) =>
+productsGroup.MapPut("{id:int}", async (int id, Product updatedProduct, IProductRepository repository) =>
 {
     if (!MiniValidator.TryValidate(updatedProduct, out var errors))
         return Results.ValidationProblem(errors);
@@ -105,13 +106,12 @@ app.MapPut("/api/products/{id}", async (int id, Product updatedProduct, IProduct
 .WithName("UpdateProduct")
 .WithDescription("Updates all fields of an existing product")
 .WithSummary("Update an existing product")
-.WithTags("Products")
 .Produces<Product>(StatusCodes.Status200OK)
 .Produces(StatusCodes.Status404NotFound)
 .ProducesValidationProblem();
 
 // DELETE product
-app.MapDelete("/api/products/{id}", async (int id, IProductRepository repository) =>
+productsGroup.MapDelete("{id:int}", async (int id, IProductRepository repository) =>
 {
     var deleted = await repository.DeleteAsync(id);
     return deleted ? Results.NoContent() : Results.NotFound();
@@ -119,7 +119,6 @@ app.MapDelete("/api/products/{id}", async (int id, IProductRepository repository
 .WithName("DeleteProduct")
 .WithDescription("Permanently deletes a product by its ID")
 .WithSummary("Delete a product")
-.WithTags("Products")
 .Produces(StatusCodes.Status204NoContent)
 .Produces(StatusCodes.Status404NotFound);
 
