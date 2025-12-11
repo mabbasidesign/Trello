@@ -11,9 +11,23 @@ public class InMemoryProductRepository : IProductRepository
         new() { Id = 3, Name = "Keyboard", Description = "Mechanical keyboard", Price = 79.99m, Stock = 25, CreatedAt = DateTime.UtcNow }
     };
 
-    public Task<IEnumerable<Product>> GetAllAsync()
+    public Task<PagedResult<Product>> GetAllAsync(int page = 1, int pageSize = 10)
     {
-        return Task.FromResult<IEnumerable<Product>>(_products);
+        var totalCount = _products.Count;
+        var items = _products
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
+
+        var result = new PagedResult<Product>
+        {
+            Items = items,
+            Page = page,
+            PageSize = pageSize,
+            TotalCount = totalCount
+        };
+
+        return Task.FromResult(result);
     }
 
     public Task<Product?> GetByIdAsync(int id)

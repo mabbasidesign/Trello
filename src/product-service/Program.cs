@@ -43,17 +43,20 @@ app.UseSwaggerUI();
 app.UseCors("AllowAll");
 app.UseHttpsRedirection();
 
-// GET all products
-app.MapGet("/api/products", async (IProductRepository repository) =>
+// GET all products with pagination
+app.MapGet("/api/products", async (IProductRepository repository, int page = 1, int pageSize = 10) =>
 {
-    var products = await repository.GetAllAsync();
-    return Results.Ok(products);
+    if (page < 1) page = 1;
+    if (pageSize < 1 || pageSize > 100) pageSize = 10;
+    
+    var pagedProducts = await repository.GetAllAsync(page, pageSize);
+    return Results.Ok(pagedProducts);
 })
     .WithName("GetProducts")
-    .WithDescription("Retrieves a list of all available products")
-    .WithSummary("Get all products")
+    .WithDescription("Retrieves a paginated list of products. Use 'page' and 'pageSize' query parameters.")
+    .WithSummary("Get all products (paginated)")
     .WithTags("Products")
-    .Produces<IEnumerable<Product>>(StatusCodes.Status200OK);
+    .Produces<PagedResult<Product>>(StatusCodes.Status200OK);
 
 // GET product by ID
 app.MapGet("/api/products/{id}", async (int id, IProductRepository repository) =>
