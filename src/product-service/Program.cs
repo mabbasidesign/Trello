@@ -5,6 +5,8 @@ using product_service.Data;
 using MiniValidation;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
+using Asp.Versioning;
+using Asp.Versioning.Builder;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,13 +30,27 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 // Add services to the container.
 builder.Services.AddEndpointsApiExplorer();
+
+// Add API Versioning
+builder.Services.AddApiVersioning(options =>
+{
+    options.DefaultApiVersion = new ApiVersion(1, 0);
+    options.AssumeDefaultVersionWhenUnspecified = true;
+    options.ReportApiVersions = true;
+    options.ApiVersionReader = ApiVersionReader.Combine(
+        new UrlSegmentApiVersionReader(),
+        new HeaderApiVersionReader("X-Api-Version"),
+        new QueryStringApiVersionReader("api-version")
+    );
+});
+
 builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new()
     {
         Title = "Product Service API",
         Version = "v1",
-        Description = "A REST API for managing products in the Trello system"
+        Description = "A REST API for managing products in the Trello system (Version 1.0)"
     });
 });
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
@@ -68,12 +84,19 @@ app.UseSwaggerUI();
 app.UseCors("AllowAll");
 app.UseHttpsRedirection();
 
-// Group product endpoints
-var productsGroup = app.MapGroup("/api/products")
+// API Versioning
+var apiVersionSet = app.NewApiVersionSet()
+    .HasApiVersion(new ApiVersion(1, 0))
+    .ReportApiVersions()
+    .Build();
+
+// Group product endpoints for v1
+var productsGroupV1 = app.MapGroup("/api/v{version:apiVersion}/products")
+    .WithApiVersionSet(apiVersionSet)
     .WithTags("Products");
 
 // GET all products with pagination and search
-productsGroup.MapGet("", async (IProductRepository repository, int page = 1, int pageSize = 10, string? search = null) =>
+productsGroupV1.MapGet("", async (IProductRepository repository, int page = 1, int pageSize = 10, string? search = null) =>
 {
     Log.Information("Getting products: Page={Page}, PageSize={PageSize}, Search={Search}", page, pageSize, search ?? "none");
     
@@ -91,7 +114,7 @@ productsGroup.MapGet("", async (IProductRepository repository, int page = 1, int
     .Produces<PagedResult<Product>>(StatusCodes.Status200OK);
 
 // GET product by ID
-productsGroup.MapGet("{id:int}", async (int id, IProductRepository repository) =>
+productsGroupV1.MapGet("{id:int}", async (int id, IProductRepository repository) =>
 {
     Log.Information("Getting product with ID: {ProductId}", id);
     
@@ -113,7 +136,7 @@ productsGroup.MapGet("{id:int}", async (int id, IProductRepository repository) =
 .Produces(StatusCodes.Status404NotFound);
 
 // POST create product
-productsGroup.MapPost("", async (Product product, IProductRepository repository) =>
+productsGroupV1.MapPost("", async (Product product, IProductRepository repository) =>
 {
     Log.Information("Creating new product: {ProductName}", product.Name);
     
@@ -136,7 +159,7 @@ productsGroup.MapPost("", async (Product product, IProductRepository repository)
 .ProducesValidationProblem();
 
 // PUT update product
-productsGroup.MapPut("{id:int}", async (int id, Product updatedProduct, IProductRepository repository) =>
+productsGroupV1.MapPut("{id:int}", async (int id, Product updatedProduct, IProductRepository repository) =>
 {
     Log.Information("Updating product: ID={ProductId}, Name={ProductName}", id, updatedProduct.Name);
     
@@ -166,7 +189,7 @@ productsGroup.MapPut("{id:int}", async (int id, Product updatedProduct, IProduct
 .ProducesValidationProblem();
 
 // DELETE product
-productsGroup.MapDelete("{id:int}", async (int id, IProductRepository repository) =>
+productsGroupV1.MapDelete("{id:int}", async (int id, IProductRepository repository) =>
 {
     Log.Information("Deleting product: ID={ProductId}", id);
     
