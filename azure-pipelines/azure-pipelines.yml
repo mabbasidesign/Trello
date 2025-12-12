@@ -21,16 +21,16 @@ variables:
   dotnetVersion: '10.0.x'
   
   # Docker Configuration
-  dockerRegistryServiceConnection: 'TrelloDockerRegistry' # Update with your service connection name
+  dockerRegistryServiceConnection: 'TrelloDockerRegistry'
   imageRepository: 'trello-microservices'
-  containerRegistry: 'trelloacr.azurecr.io' # Update with your ACR name
+  containerRegistry: 'trelloacr.azurecr.io'
   dockerfilePath: '$(Build.SourcesDirectory)'
   tag: '$(Build.BuildId)'
   
   # Azure Resources
-  azureSubscription: 'TrelloAzureSubscription' # Update with your service connection name
+  azureSubscription: 'TrelloAzureSubscription'
   resourceGroupName: 'rg-trello-microservices'
-  location: 'eastus'
+  location: 'canadaeast'
 
 stages:
   - stage: Build
