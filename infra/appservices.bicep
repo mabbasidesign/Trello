@@ -105,7 +105,7 @@ resource productAppService 'Microsoft.Web/sites@2022-09-01' = {
       ]
       connectionStrings: [
         {
-          name: 'DefaultConnection'
+          name: 'DefaultSQLConnection'
           connectionString: productDbConnectionString
           type: 'SQLAzure'
         }
@@ -163,7 +163,7 @@ resource orderAppService 'Microsoft.Web/sites@2022-09-01' = {
       ]
       connectionStrings: [
         {
-          name: 'DefaultConnection'
+          name: 'DefaultSQLConnection'
           connectionString: orderDbConnectionString
           type: 'SQLAzure'
         }
