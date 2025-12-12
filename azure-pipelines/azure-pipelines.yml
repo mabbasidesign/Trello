@@ -169,6 +169,19 @@ stages:
                   --name "servicebus-deployment-$(Build.BuildId)"
           
           - task: AzureCLI@2
+            displayName: 'Deploy SQL Server and Databases'
+            inputs:
+              azureSubscription: $(azureSubscription)
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                az deployment group create \
+                  --resource-group $(resourceGroupName) \
+                  --template-file $(Build.SourcesDirectory)/infra/sqlserver.bicep \
+                  --parameters sqlAdminPassword="$(SQL_ADMIN_PASSWORD)" \
+                  --name "sqlserver-deployment-$(Build.BuildId)"
+          
+          - task: AzureCLI@2
             displayName: 'Deploy App Services'
             inputs:
               azureSubscription: $(azureSubscription)
@@ -186,6 +199,17 @@ stages:
                   --name RootManageSharedAccessKey \
                   --query primaryConnectionString -o tsv)
                 
+                # Get SQL connection strings from deployment outputs
+                PRODUCT_DB_CONN=$(az deployment group show \
+                  --resource-group $(resourceGroupName) \
+                  --name "sqlserver-deployment-$(Build.BuildId)" \
+                  --query properties.outputs.productConnectionString.value -o tsv)
+                
+                ORDER_DB_CONN=$(az deployment group show \
+                  --resource-group $(resourceGroupName) \
+                  --name "sqlserver-deployment-$(Build.BuildId)" \
+                  --query properties.outputs.orderConnectionString.value -o tsv)
+                
                 # Deploy App Services
                 az deployment group create \
                   --resource-group $(resourceGroupName) \
@@ -194,8 +218,8 @@ stages:
                     containerRegistryUsername="$ACR_USERNAME" \
                     containerRegistryPassword="$ACR_PASSWORD" \
                     serviceBusConnectionString="$SERVICEBUS_CONN" \
-                    productDbConnectionString="$(PRODUCT_DB_CONNECTION_STRING)" \
-                    orderDbConnectionString="$(ORDER_DB_CONNECTION_STRING)" \
+                    productDbConnectionString="$PRODUCT_DB_CONN" \
+                    orderDbConnectionString="$ORDER_DB_CONN" \
                     imageTag="$(tag)" \
                   --name "appservices-deployment-$(Build.BuildId)"
 
