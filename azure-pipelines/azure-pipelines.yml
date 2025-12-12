@@ -157,15 +157,6 @@ stages:
         
         steps:
           - task: AzureCLI@2
-            displayName: 'Register Resource Providers'
-            inputs:
-              azureSubscription: $(azureSubscription)
-              scriptType: 'bash'
-              scriptLocation: 'inlineScript'
-              inlineScript: |
-                az provider register --namespace Microsoft.ServiceBus --wait
-          
-          - task: AzureCLI@2
             displayName: 'Deploy Infrastructure'
             inputs:
               azureSubscription: $(azureSubscription)
