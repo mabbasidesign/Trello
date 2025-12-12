@@ -195,7 +195,7 @@ stages:
                 # Get Service Bus connection string
                 SERVICEBUS_CONN=$(az servicebus namespace authorization-rule keys list \
                   --resource-group $(resourceGroupName) \
-                  --namespace-name sb-trello-microservices \
+                  --namespace-name trello-servicebus-fumbtexxi35ii \
                   --name RootManageSharedAccessKey \
                   --query primaryConnectionString -o tsv)
                 
