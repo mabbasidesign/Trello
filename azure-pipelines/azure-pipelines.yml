@@ -157,7 +157,7 @@ stages:
         
         steps:
           - task: AzureCLI@2
-            displayName: 'Deploy Infrastructure'
+            displayName: 'Deploy Service Bus Infrastructure'
             inputs:
               azureSubscription: $(azureSubscription)
               scriptType: 'bash'
@@ -166,7 +166,38 @@ stages:
                 az deployment group create \
                   --resource-group $(resourceGroupName) \
                   --template-file $(Build.SourcesDirectory)/infra/servicebus.bicep \
-                  --name "deployment-$(Build.BuildId)"
+                  --name "servicebus-deployment-$(Build.BuildId)"
+          
+          - task: AzureCLI@2
+            displayName: 'Deploy App Services'
+            inputs:
+              azureSubscription: $(azureSubscription)
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                # Get ACR credentials
+                ACR_USERNAME=$(az acr credential show --name trelloacr --query "username" -o tsv)
+                ACR_PASSWORD=$(az acr credential show --name trelloacr --query "passwords[0].value" -o tsv)
+                
+                # Get Service Bus connection string
+                SERVICEBUS_CONN=$(az servicebus namespace authorization-rule keys list \
+                  --resource-group $(resourceGroupName) \
+                  --namespace-name sb-trello-microservices \
+                  --name RootManageSharedAccessKey \
+                  --query primaryConnectionString -o tsv)
+                
+                # Deploy App Services
+                az deployment group create \
+                  --resource-group $(resourceGroupName) \
+                  --template-file $(Build.SourcesDirectory)/infra/appservices.bicep \
+                  --parameters \
+                    containerRegistryUsername="$ACR_USERNAME" \
+                    containerRegistryPassword="$ACR_PASSWORD" \
+                    serviceBusConnectionString="$SERVICEBUS_CONN" \
+                    productDbConnectionString="$(PRODUCT_DB_CONNECTION_STRING)" \
+                    orderDbConnectionString="$(ORDER_DB_CONNECTION_STRING)" \
+                    imageTag="$(tag)" \
+                  --name "appservices-deployment-$(Build.BuildId)"
 
   # - stage: DeployServices
   #   displayName: 'Deploy Services'
