@@ -163,9 +163,9 @@ stages:
               scriptType: 'bash'
               scriptLocation: 'inlineScript'
               inlineScript: |
-                az deployment sub create \
-                  --location $(location) \
-                  --template-file $(Build.SourcesDirectory)/infra/main.bicep \
+                az deployment group create \
+                  --resource-group $(resourceGroupName) \
+                  --template-file $(Build.SourcesDirectory)/infra/servicebus.bicep \
                   --parameters environment=prod \
                   --name "deployment-$(Build.BuildId)"
 
