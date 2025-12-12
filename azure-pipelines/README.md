@@ -59,10 +59,10 @@ Edit `azure-pipelines.yml` and update these variables:
 
 ```yaml
 variables:
-  dockerRegistryServiceConnection: 'TrelloDockerRegistry' # Your service connection name
-  containerRegistry: 'trelloacr.azurecr.io' # Your ACR name
-  azureSubscription: 'TrelloAzureSubscription' # Your service connection name
-  resourceGroupName: 'rg-trello-microservices' # Your resource group
+  dockerRegistryServiceConnection: 'TrelloDockerRegistry' # Service connection name
+  containerRegistry: 'trelloacr.azurecr.io' # ACR name
+  azureSubscription: 'TrelloAzureSubscription' # Service connection name
+  resourceGroupName: 'rg-trello-microservices' # Resource group
 ```
 
 ### 4. Create App Services (Option 1: Web Apps for Containers)

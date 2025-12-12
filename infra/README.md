@@ -27,7 +27,7 @@ This folder contains Bicep templates for deploying Azure Service Bus infrastruct
 # Login to Azure
 az login
 
-# Set subscription (if you have multiple)
+# Set subscription (if multiple subscriptions exist)
 az account set --subscription "<your-subscription-id>"
 
 # Deploy the infrastructure
