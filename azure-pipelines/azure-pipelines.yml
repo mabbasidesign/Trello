@@ -166,7 +166,6 @@ stages:
                 az deployment group create \
                   --resource-group $(resourceGroupName) \
                   --template-file $(Build.SourcesDirectory)/infra/servicebus.bicep \
-                  --parameters environment=prod \
                   --name "deployment-$(Build.BuildId)"
 
   - stage: DeployServices
