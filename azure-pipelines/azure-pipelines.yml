@@ -168,30 +168,30 @@ stages:
                   --template-file $(Build.SourcesDirectory)/infra/servicebus.bicep \
                   --name "deployment-$(Build.BuildId)"
 
-  - stage: DeployServices
-    displayName: 'Deploy Services'
-    dependsOn: DeployInfrastructure
-    condition: succeeded()
-    jobs:
-      - deployment: DeployToAppService
-        displayName: 'Deploy to Azure App Service'
-        pool:
-          vmImage: 'ubuntu-latest'
-        environment: 'production'
-        strategy:
-          runOnce:
-            deploy:
-              steps:
-                - task: AzureWebAppContainer@1
-                  displayName: 'Deploy Product Service'
-                  inputs:
-                    azureSubscription: $(azureSubscription)
-                    appName: 'app-trello-product-prod' # Update with app name
-                    containers: '$(containerRegistry)/$(imageRepository)-product:$(tag)'
-                
-                - task: AzureWebAppContainer@1
-                  displayName: 'Deploy Order Service'
-                  inputs:
-                    azureSubscription: $(azureSubscription)
-                    appName: 'app-trello-order-prod' # Update with app name
-                    containers: '$(containerRegistry)/$(imageRepository)-order:$(tag)'
+  # - stage: DeployServices
+  #   displayName: 'Deploy Services'
+  #   dependsOn: DeployInfrastructure
+  #   condition: succeeded()
+  #   jobs:
+  #     - deployment: DeployToAppService
+  #       displayName: 'Deploy to Azure App Service'
+  #       pool:
+  #         vmImage: 'ubuntu-latest'
+  #       environment: 'production'
+  #       strategy:
+  #         runOnce:
+  #           deploy:
+  #             steps:
+  #               - task: AzureWebAppContainer@1
+  #                 displayName: 'Deploy Product Service'
+  #                 inputs:
+  #                   azureSubscription: $(azureSubscription)
+  #                   appName: 'app-trello-product-prod' # Update with app name
+  #                   containers: '$(containerRegistry)/$(imageRepository)-product:$(tag)'
+  #               
+  #               - task: AzureWebAppContainer@1
+  #                 displayName: 'Deploy Order Service'
+  #                 inputs:
+  #                   azureSubscription: $(azureSubscription)
+  #                   appName: 'app-trello-order-prod' # Update with app name
+  #                   containers: '$(containerRegistry)/$(imageRepository)-order:$(tag)'
