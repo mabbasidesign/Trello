@@ -178,7 +178,7 @@ stages:
                 az deployment group create \
                   --resource-group $(resourceGroupName) \
                   --template-file $(Build.SourcesDirectory)/infra/sqlserver.bicep \
-                  --parameters sqlAdminPassword="$(SQL_ADMIN_PASSWORD)" location="eastus" \
+                  --parameters sqlAdminPassword="$(SQL_ADMIN_PASSWORD)" location="canadaeast" \
                   --name "sqlserver-deployment-$(Build.BuildId)"
           
           - task: AzureCLI@2
