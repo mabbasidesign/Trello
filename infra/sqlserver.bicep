@@ -2,7 +2,7 @@
 param location string = resourceGroup().location
 
 @description('SQL Server name')
-param sqlServerName string = 'sql-trello-${uniqueString(resourceGroup().id)}'
+param sqlServerName string = 'sql-trello-${uniqueString(resourceGroup().id, location)}'
 
 @description('SQL Server administrator login')
 param sqlAdminLogin string = 'sqladmin'
