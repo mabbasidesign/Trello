@@ -7,10 +7,10 @@ services:
       dockerfile: Dockerfile
     container_name: product-service
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Development}
       - ASPNETCORE_URLS=http://+:8080
-      - ConnectionStrings__DefaultSQLConnection=Server=sqlserver;Database=TrelloProducts;User Id=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=true;MultipleActiveResultSets=True
-      - ServiceBus__ConnectionString=${SERVICEBUS_CONNECTION_STRING:-}
+      - ConnectionStrings__DefaultSQLConnection=Server=${SQL_SERVER:-sqlserver};Database=TrelloProducts;User Id=${SQL_USER:-sa};Password=${SQL_PASSWORD};TrustServerCertificate=true;MultipleActiveResultSets=True
+      - ServiceBus__ConnectionString=${SERVICEBUS_CONNECTION_STRING}
       - ServiceBus__ProductsQueue=products
       - ServiceBus__OrdersQueue=orders
       - ServiceBus__OrderNotificationsTopic=order-notifications
