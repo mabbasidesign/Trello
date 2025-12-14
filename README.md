@@ -1,44 +1,70 @@
 # Trello Microservices
 
-A production-ready microservices architecture built with .NET 10.0, demonstrating modern cloud-native development practices including event-driven communication, containerization, and infrastructure as code.
+A production-ready microservices architecture built with .NET 10.0, demonstrating modern cloud-native development practices including event-driven communication, containerization, automated CI/CD, and enterprise-grade security.
 
-##  Architecture
+## 🏗️ Architecture
 
-This project implements a microservices-based e-commerce system with two independent services:
+This project implements a microservices-based system with two independent services deployed on Azure:
 
 - **Product Service** - Manages product catalog (CRUD operations, search, pagination)
-- **Order Service** - Handles orders with items and status workflow
+- **Order Service** - Handles orders with items and event-driven product synchronization
 
 ### Key Architectural Features
 
-- **Database Per Service** - Each microservice has its own isolated database (TrelloProducts, TrelloOrders)
+- **Database Per Service** - Each microservice has its own isolated Azure SQL Database (TrelloProducts, TrelloOrders)
 - **Event-Driven Communication** - Services communicate via Azure Service Bus using pub/sub pattern
-- **API Versioning** - Support for URL segment, header, and query string versioning
-- **Health Checks** - Comprehensive health monitoring endpoints for Kubernetes/container orchestration
-- **Structured Logging** - Serilog with console and file sinks
-- **Docker Support** - Full containerization with Docker Compose
-- **Infrastructure as Code** - Azure deployment templates using Bicep
+- **API Versioning** - URL-based versioning with Swagger integration (Asp.Versioning 8.1.0)
+- **CI/CD Pipeline** - Fully automated Azure DevOps pipeline (build, Docker, infrastructure deployment)
+- **Infrastructure as Code** - Complete Azure infrastructure defined in Bicep templates
+- **Enterprise Security** - 3-tier secret management (Docker .env, .NET User Secrets, Azure Key Vault)
+- **Docker Support** - Full containerization with multi-service Docker Compose
+- **Zero-Trust Security** - Managed identity authentication, RBAC, no hardcoded credentials
 
-## Technologies
+## 🚀 Technologies
 
+### Core Framework
 - **.NET 10.0** - Minimal APIs with WebApplication
-- **Entity Framework Core 10.0.1** - Code-first with SQL Server
-- **SQL Server 2022** - Database (Docker container)
-- **Serilog 10.0.0** - Structured logging
-- **Swashbuckle/OpenAPI** - API documentation
-- **Azure Service Bus 7.20.1** - Async messaging (optional)
-- **Docker & Docker Compose** - Containerization
+- **C# 12** - Latest language features
+- **Entity Framework Core 10.0.1** - Code-first with migrations
+
+### Azure Cloud Services
+- **Azure SQL Database** - Managed relational database (S0 tier)
+- **Azure Service Bus** - Enterprise messaging (queues and topics)
+- **Azure App Services** - Container hosting (B1 Linux)
+- **Azure Container Registry** - Private Docker image registry
+- **Azure Key Vault** - Centralized secret management with RBAC
+- **Azure DevOps** - CI/CD pipelines and Git repositories
+
+### DevOps & Infrastructure
+- **Docker** - Containerization and orchestration
 - **Azure Bicep** - Infrastructure as Code
+- **Azure DevOps Pipelines** - Multi-stage CI/CD automation
+- **Git** - Version control with GitHub integration
+
+### Security
+- **.env Files** - Docker environment variable management
+- **.NET User Secrets** - Encrypted local development secrets
+- **Azure Key Vault** - Production secret storage
+- **Managed Identity** - Password-less Azure authentication
 
 ### NuGet Packages
 
+**API & Versioning:**
+- `Asp.Versioning.Http` (8.1.0)
+- `Asp.Versioning.Mvc.ApiExplorer` (8.1.0)
+- `Microsoft.AspNetCore.OpenApi` (10.0.1)
+- `Swashbuckle.AspNetCore` (10.0.1)
+
+**Database:**
 - `Microsoft.EntityFrameworkCore.SqlServer` (10.0.1)
 - `Microsoft.EntityFrameworkCore.Design` (10.0.1)
-- `Serilog.AspNetCore` (10.0.0)
-- `Serilog.Sinks.File` (6.0.0)
-- `Asp.Versioning.Http` (8.1.0)
-- `MiniValidation` (0.9.2)
+- `Microsoft.EntityFrameworkCore.Tools` (10.0.1)
+
+**Messaging:**
 - `Azure.Messaging.ServiceBus` (7.20.1)
+
+**Validation & Health:**
+- `MiniValidation` (0.9.2)
 - `Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore` (10.0.1)
 
 ## Features
@@ -71,33 +97,23 @@ This project implements a microservices-based e-commerce system with two indepen
 
 ## Prerequisites
 
+## 📋 Prerequisites
+
 - [.NET 10.0 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
-- [Docker Desktop](https://www.docker.com/products/docker-desktop) (with Linux containers)
-- [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli) (optional, for Azure deployment)
-- [SQL Server](https://www.microsoft.com/en-us/sql-server/sql-server-downloads) (or use Docker)
+- [Docker Desktop](https://www.docker.com/products/docker-desktop) (for local development)
+- [Azure Subscription](https://azure.microsoft.com/free/) (for cloud deployment)
+- [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli) (optional, for manual deployments)
 
-## Getting Started
+## 🚀 Getting Started
 
-### Option 1: Docker (Recommended)
+### Production Deployment (Azure)
 
-1. **Clone the repository**
-   ```powershell
-   git clone https://github.com/mabbasidesign/Trello.git
-   cd Trello\docker
-   ```
+The application is deployed and running on Azure:
 
-2. **Start all services**
-   ```powershell
-   docker-compose up -d --build
-   ```
+- **Product Service API:** https://app-trello-product-prod.azurewebsites.net/swagger
+- **Order Service API:** https://app-trello-order-prod.azurewebsites.net/swagger
 
-3. **Access the services**
-   - Product Service: http://localhost:5217/swagger
-   - Order Service: http://localhost:5037/swagger
-   - Product Health: http://localhost:5217/health
-   - Order Health: http://localhost:5037/health
-
-### Option 2: Local Development
+### Local Development with Docker
 
 1. **Clone the repository**
    ```powershell
@@ -105,9 +121,47 @@ This project implements a microservices-based e-commerce system with two indepen
    cd Trello
    ```
 
-2. **Update connection strings** in `appsettings.Development.json` for both services
+2. **Create .env file** (copy from template)
+   ```powershell
+   cp .env.example .env
+   ```
+   
+3. **Update .env with your local credentials:**
+   ```env
+   SQL_SERVER=sqlserver
+   SQL_USER=sa
+   SQL_PASSWORD=YourStrong@Passw0rd
+   SERVICEBUS_CONNECTION_STRING=<optional-for-local>
+   ```
 
-3. **Run database migrations**
+4. **Start infrastructure** (SQL Server, Service Bus emulator - optional)
+   ```powershell
+   cd docker
+   docker-compose -f docker-compose.infrastructure.yml up -d
+   ```
+
+5. **Start the services**
+   ```powershell
+   docker-compose -f docker-compose.product.yml up -d --build
+   docker-compose -f docker-compose.order.yml up -d --build
+   ```
+
+6. **Access the services**
+   - Product Service: http://localhost:5217/swagger
+   - Order Service: http://localhost:5037/swagger
+
+### Local Development with .NET
+
+1. **Configure User Secrets** (already initialized)
+   ```powershell
+   cd src\product-service
+   dotnet user-secrets set "ConnectionStrings:DefaultSQLConnection" "Server=localhost;Database=TrelloProducts;User Id=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=true"
+   
+   cd ..\order-service
+   dotnet user-secrets set "ConnectionStrings:DefaultSQLConnection" "Server=localhost;Database=TrelloOrders;User Id=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=true"
+   ```
+
+2. **Run database migrations**
    ```powershell
    cd src\product-service
    dotnet ef database update
@@ -116,7 +170,7 @@ This project implements a microservices-based e-commerce system with two indepen
    dotnet ef database update
    ```
 
-4. **Run the services**
+3. **Run the services**
    ```powershell
    # Terminal 1 - Product Service
    cd src\product-service
@@ -127,26 +181,94 @@ This project implements a microservices-based e-commerce system with two indepen
    dotnet run
    ```
 
-## Docker Commands
+## 🔧 Docker Commands
 
 See [docker/DOCKER-COMMANDS.md](docker/DOCKER-COMMANDS.md) for comprehensive Docker usage guide.
 
 **Quick Reference:**
 ```powershell
-# Start all services
+# Start infrastructure (SQL Server)
 cd docker
-docker-compose up -d --build
+docker-compose -f docker-compose.infrastructure.yml up -d
+
+# Start product service
+docker-compose -f docker-compose.product.yml up -d --build
+
+# Start order service
+docker-compose -f docker-compose.order.yml up -d --build
 
 # View logs
 docker logs product-service -f
 docker logs order-service -f
 
 # Stop all services
-docker-compose down
-
-# Rebuild after code changes
-docker-compose up -d --build
+docker-compose -f docker-compose.product.yml down
+docker-compose -f docker-compose.order.yml down
+docker-compose -f docker-compose.infrastructure.yml down
 ```
+
+## 🔐 Security Architecture
+
+This project implements a **3-tier security model** following Azure best practices:
+
+### 1. Docker Development (.env files)
+- **Location:** `Trello/.env` (gitignored)
+- **Usage:** Docker Compose environment variables
+- **Secrets:** SQL passwords, Service Bus connection strings
+- **Template:** `.env.example` provided for developers
+
+### 2. .NET Local Development (User Secrets)
+- **Location:** `%APPDATA%\Microsoft\UserSecrets\{id}\secrets.json`
+- **Usage:** Local .NET development (encrypted, outside repository)
+- **Configuration:** Already initialized in both `.csproj` files
+- **Secrets:** Database connection strings
+
+### 3. Azure Production (Key Vault)
+- **Resource:** `kv-Trello-key`
+- **Authentication:** Managed Identity (password-less)
+- **Access Control:** RBAC with audit logging
+- **Secrets:** SQL passwords, Service Bus connection strings
+- **Integration:** App Services configured to reference Key Vault
+
+**Security Features:**
+- ✅ No hardcoded passwords in source code
+- ✅ All sensitive files excluded from Git (.gitignore)
+- ✅ Managed identity for Azure resource authentication
+- ✅ RBAC-based access control
+- ✅ Centralized secret rotation capability
+- ✅ Audit logs for secret access
+
+## 🚀 CI/CD Pipeline
+
+Fully automated Azure DevOps pipeline with 3 stages:
+
+### Stage 1: Build
+- Restore NuGet packages
+- Compile .NET projects
+- Run unit tests (when available)
+- Validate code quality
+
+### Stage 2: BuildDockerImages
+- Build Docker images for both services
+- Tag with build number
+- Push to Azure Container Registry (trelloacr.azurecr.io)
+- Clean up old images
+
+### Stage 3: DeployInfrastructure
+- Deploy Bicep templates to Azure
+- Provision/update Azure resources:
+  - Service Bus namespace, queues, topics
+  - SQL Server and databases
+  - App Services
+  - Key Vault (optional)
+- Deploy container images to App Services
+- Verify deployment health
+
+**Pipeline Triggers:**
+- Automatic on push to `main` or `develop` branch
+- Path filters: `src/**`, `docker/**`, `infra/**`, `azure-pipelines.yml`
+
+**View Pipeline:** [Azure DevOps Pipelines](https://dev.azure.com)
 
 ## API Documentation
 
@@ -252,88 +374,169 @@ Trello/
 - UnitPrice (decimal(18,2))
 - TotalPrice (decimal(18,2))
 
+## ☁️ Azure Resources
+
+The application is deployed with the following Azure resources:
+
+### Resource Group: rg-trello-microservices
+- **Location:** Canada East (primary), West US 2 (database)
+- **Subscription:** f2f7f036-0d40-48ca-a532-eb590c2eac8b
+
+### Compute
+- **App Service Plan:** B1 Linux (1 vCPU, 1.75 GB RAM)
+- **App Services:**
+  - `app-trello-product-prod` (Product microservice)
+  - `app-trello-order-prod` (Order microservice)
+- **Container Registry:** trelloacr.azurecr.io (Standard SKU)
+
+### Data
+- **SQL Server:** sql-trello-ziutkivc6smnk.database.windows.net (West US 2)
+  - **Databases:** TrelloProducts (S0 tier), TrelloOrders (S0 tier)
+  - **Admin User:** sqladmin
+  - **Firewall:** Whitelisted IPs + Azure services
+
+### Messaging
+- **Service Bus Namespace:** trello-servicebus-fumbtexxi35ii (Canada East)
+  - **Queues:** products, orders
+  - **Topic:** order-notifications (with subscriptions)
+
+### Security
+- **Key Vault:** kv-Trello-key
+  - **Secrets:** sql-admin-password, servicebus-connection-string
+  - **Access:** Managed identity with RBAC
+  - **Audit:** All secret access logged
+
+### DevOps
+- **Azure DevOps:** CI/CD pipeline with automated deployment
+- **Git Repository:** GitHub integration
+
 ## 🔧 Configuration
 
-### Service Bus (Optional)
+### Environment Variables
 
-The application works without Azure Service Bus by using a NullMessagePublisher pattern. To enable Azure Service Bus:
+Both services support configuration via environment variables (Docker) or User Secrets (.NET):
 
-1. Deploy the infrastructure:
-   ```powershell
-   az deployment sub create --location eastus --template-file infra/main.bicep --parameters environment=dev
-   ```
+**Required:**
+- `ConnectionStrings__DefaultSQLConnection` - Database connection string
 
-2. Update `appsettings.json` in both services:
-   ```json
-   {
-     "ServiceBus": {
-       "ConnectionString": "your-connection-string",
-       "ProductQueueName": "products",
-       "OrderQueueName": "orders",
-       "OrderNotificationTopicName": "order-notifications"
-     }
-   }
-   ```
+**Optional:**
+- `ServiceBus__ConnectionString` - Azure Service Bus connection string (for messaging)
+- `ASPNETCORE_ENVIRONMENT` - Development/Production
 
-### Environment Variables (Docker)
-
-Both services support configuration via environment variables:
-
-- `ConnectionStrings__DefaultSQLConnection` - SQL Server connection string
-- `ServiceBus__ConnectionString` - Azure Service Bus connection string
-- `ServiceBus__ProductQueueName` - Product queue name
-- `ServiceBus__OrderQueueName` - Order queue name
-- `ServiceBus__OrderNotificationTopicName` - Order notifications topic
-
-## Azure Deployment
-
-See [infra/README.md](infra/README.md) for detailed Azure deployment instructions.
-
-**Quick Deploy:**
-```powershell
-# Login to Azure
-az login
-
-# Deploy infrastructure
-az deployment sub create \
-  --location eastus \
-  --template-file infra/main.bicep \
-  --parameters environment=dev
-
-# Get connection string from output and update appsettings.json
+**Example (Docker .env):**
+```env
+SQL_SERVER=sqlserver
+SQL_USER=sa
+SQL_PASSWORD=YourStrong@Passw0rd
+SERVICEBUS_CONNECTION_STRING=Endpoint=sb://...
+ASPNETCORE_ENVIRONMENT=Development
 ```
 
-##  Logging
+**Example (Azure Key Vault Reference):**
+```
+ConnectionStrings__DefaultSQLConnection=Server=sql-trello-ziutkivc6smnk.database.windows.net;Database=TrelloProducts;User Id=sqladmin;Password=@Microsoft.KeyVault(VaultName=kv-Trello-key;SecretName=sql-admin-password);TrustServerCertificate=true
+```
 
-Logs are written to:
-- **Console** - Colored output for development
-- **Files** - `logs/log-YYYYMMDD.txt` (daily rolling)
+## 🏗️ Azure Deployment
 
-Log levels: Information, Warning, Error
+The infrastructure is fully automated through Azure DevOps pipelines. For manual deployment:
 
-## Health Checks
+### Prerequisites
+- Azure CLI installed and logged in (`az login`)
+- Contributor access to Azure subscription
+- Azure DevOps project configured
 
-Each service exposes three health endpoints:
+### Automatic Deployment (Recommended)
+1. Push code to `main` branch
+2. Pipeline automatically triggers
+3. Infrastructure deployed via Bicep
+4. Docker images built and pushed to ACR
+5. App Services updated with new images
+
+### Manual Infrastructure Deployment
+```powershell
+# Deploy Service Bus
+az deployment group create \
+  --resource-group rg-trello-microservices \
+  --template-file infra/servicebus.bicep
+
+# Deploy SQL Server
+az deployment group create \
+  --resource-group rg-trello-microservices \
+  --template-file infra/sqlserver.bicep
+
+# Deploy App Services
+az deployment group create \
+  --resource-group rg-trello-microservices \
+  --template-file infra/appservices.bicep
+
+# Deploy Key Vault (optional)
+az deployment group create \
+  --resource-group rg-trello-microservices \
+  --template-file infra/keyvault.bicep \
+  --parameters sqlAdminPassword='***' serviceBusConnectionString='***'
+```
+
+See [infra/README.md](infra/README.md) for detailed deployment guide.
+
+## 🔍 Monitoring & Health Checks
+
+### Health Endpoints
+Each service exposes health check endpoints:
 
 - `/health` - Overall health (all checks)
 - `/health/ready` - Readiness probe (database connectivity)
 - `/health/live` - Liveness probe (basic service availability)
 
-Useful for Kubernetes/container orchestration.
+### Logs
+- **Azure App Service:** Navigate to App Service → Monitoring → Log stream
+- **Local Docker:** `docker logs <container-name> -f`
+- **Application Logs:** Console output with structured information
 
-##  Testing the APIs
+### Application Insights (Future)
+- Performance metrics
+- Request tracking
+- Exception monitoring
+- Custom telemetry
 
-### Create a Product
+## 🧪 Testing the APIs
+
+### Production APIs (Azure)
+- Product Service: https://app-trello-product-prod.azurewebsites.net/swagger
+- Order Service: https://app-trello-order-prod.azurewebsites.net/swagger
+
+### Local Development
+Use Swagger UI at http://localhost:5217/swagger and http://localhost:5037/swagger
+
+### Example API Calls
+
+**Create a Product:**
 ```powershell
-curl -X POST http://localhost:5217/api/v1/products `
+curl -X POST https://app-trello-product-prod.azurewebsites.net/api/v1/products `
   -H "Content-Type: application/json" `
   -d '{"name":"Laptop","description":"High-performance laptop","price":999.99}'
 ```
 
-### Create an Order
+**Get All Products:**
 ```powershell
-curl -X POST http://localhost:5037/api/v1/orders `
+curl https://app-trello-product-prod.azurewebsites.net/api/v1/products
+```
+
+**Create an Order:**
+```powershell
+curl -X POST https://app-trello-order-prod.azurewebsites.net/api/v1/orders `
   -H "Content-Type: application/json" `
+  -d '{
+    "items": [
+      {"productId":1,"productName":"Laptop","quantity":1,"unitPrice":999.99}
+    ]
+  }'
+```
+
+**Update Order Status:**
+```powershell
+curl -X PATCH https://app-trello-order-prod.azurewebsites.net/api/v1/orders/1/status?newStatus=Processing
+```
   -d '{"orderItems":[{"productId":1,"productName":"Laptop","quantity":2,"unitPrice":999.99}]}'
 ```
 
