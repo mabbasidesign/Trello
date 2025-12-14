@@ -2,7 +2,7 @@
 
 A production-ready microservices architecture built with .NET 10.0, demonstrating modern cloud-native development practices including event-driven communication, containerization, automated CI/CD, and enterprise-grade security.
 
-## 🏗️ Architecture
+## Architecture
 
 This project implements a microservices-based system with two independent services deployed on Azure:
 
@@ -20,7 +20,7 @@ This project implements a microservices-based system with two independent servic
 - **Docker Support** - Full containerization with multi-service Docker Compose
 - **Zero-Trust Security** - Managed identity authentication, RBAC, no hardcoded credentials
 
-## 🚀 Technologies
+## Technologies
 
 ### Core Framework
 - **.NET 10.0** - Minimal APIs with WebApplication
@@ -97,14 +97,14 @@ This project implements a microservices-based system with two independent servic
 
 ## Prerequisites
 
-## 📋 Prerequisites
+## Prerequisites
 
 - [.NET 10.0 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
 - [Docker Desktop](https://www.docker.com/products/docker-desktop) (for local development)
 - [Azure Subscription](https://azure.microsoft.com/free/) (for cloud deployment)
 - [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli) (optional, for manual deployments)
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Production Deployment (Azure)
 
@@ -181,7 +181,7 @@ The application is deployed and running on Azure:
    dotnet run
    ```
 
-## 🔧 Docker Commands
+## Docker Commands
 
 See [docker/DOCKER-COMMANDS.md](docker/DOCKER-COMMANDS.md) for comprehensive Docker usage guide.
 
@@ -207,7 +207,7 @@ docker-compose -f docker-compose.order.yml down
 docker-compose -f docker-compose.infrastructure.yml down
 ```
 
-## 🔐 Security Architecture
+## Security Architecture
 
 This project implements a **3-tier security model** following Azure best practices:
 
@@ -238,7 +238,7 @@ This project implements a **3-tier security model** following Azure best practic
 - ✅ Centralized secret rotation capability
 - ✅ Audit logs for secret access
 
-## 🚀 CI/CD Pipeline
+## CI/CD Pipeline
 
 Fully automated Azure DevOps pipeline with 3 stages:
 
@@ -374,7 +374,7 @@ Trello/
 - UnitPrice (decimal(18,2))
 - TotalPrice (decimal(18,2))
 
-## ☁️ Azure Resources
+## Azure Resources
 
 The application is deployed with the following Azure resources:
 
@@ -410,7 +410,7 @@ The application is deployed with the following Azure resources:
 - **Azure DevOps:** CI/CD pipeline with automated deployment
 - **Git Repository:** GitHub integration
 
-## 🔧 Configuration
+## Configuration
 
 ### Environment Variables
 
@@ -437,7 +437,7 @@ ASPNETCORE_ENVIRONMENT=Development
 ConnectionStrings__DefaultSQLConnection=Server=sql-trello-ziutkivc6smnk.database.windows.net;Database=TrelloProducts;User Id=sqladmin;Password=@Microsoft.KeyVault(VaultName=kv-Trello-key;SecretName=sql-admin-password);TrustServerCertificate=true
 ```
 
-## 🏗️ Azure Deployment
+## Azure Deployment
 
 The infrastructure is fully automated through Azure DevOps pipelines. For manual deployment:
 
@@ -479,7 +479,7 @@ az deployment group create \
 
 See [infra/README.md](infra/README.md) for detailed deployment guide.
 
-## 🔍 Monitoring & Health Checks
+## Monitoring & Health Checks
 
 ### Health Endpoints
 Each service exposes health check endpoints:
@@ -499,7 +499,7 @@ Each service exposes health check endpoints:
 - Exception monitoring
 - Custom telemetry
 
-## 🧪 Testing the APIs
+## Testing the APIs
 
 ### Production APIs (Azure)
 - Product Service: https://app-trello-product-prod.azurewebsites.net/swagger
