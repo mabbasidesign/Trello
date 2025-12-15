@@ -231,12 +231,12 @@ This project implements a **3-tier security model** following Azure best practic
 - **Integration:** App Services configured to reference Key Vault
 
 **Security Features:**
-- ✅ No hardcoded passwords in source code
-- ✅ All sensitive files excluded from Git (.gitignore)
-- ✅ Managed identity for Azure resource authentication
-- ✅ RBAC-based access control
-- ✅ Centralized secret rotation capability
-- ✅ Audit logs for secret access
+- No hardcoded passwords in source code
+-  All sensitive files excluded from Git (.gitignore)
+- Managed identity for Azure resource authentication
+- RBAC-based access control
+- Centralized secret rotation capability
+-  Audit logs for secret access
 
 ## CI/CD Pipeline
 
