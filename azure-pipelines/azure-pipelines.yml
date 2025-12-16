@@ -91,6 +91,7 @@ stages:
               codeCoverageTool: 'Cobertura'
               summaryFileLocation: '$(Agent.TempDirectory)/**/*coverage.cobertura.xml'
 
+
   - stage: BuildDockerImages
     displayName: 'Build Docker Images'
     dependsOn: Build
@@ -145,6 +146,7 @@ stages:
               tags: |
                 $(tag)
                 latest
+
 
   - stage: DeployInfrastructure
     displayName: 'Deploy Azure Infrastructure'
@@ -223,6 +225,35 @@ stages:
                     orderDbConnectionString="$ORDER_DB_CONN" \
                     imageTag="$(tag)" \
                   --name "appservices-deployment-$(Build.BuildId)"
+          
+          - task: AzureCLI@2
+            displayName: 'Deploy API Management'
+            inputs:
+              azureSubscription: $(azureSubscription)
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                # Deploy APIM
+                az deployment group create \
+                  --resource-group $(resourceGroupName) \
+                  --template-file $(Build.SourcesDirectory)/infra/apim.bicep \
+                  --parameters \
+                    location=$(location) \
+                    publisherEmail="admin@trello.com" \
+                    publisherName="Trello Microservices" \
+                    productServiceUrl="https://app-trello-product-prod.azurewebsites.net/api/v1" \
+                    orderServiceUrl="https://app-trello-order-prod.azurewebsites.net/api/v1" \
+                  --name "apim-deployment-$(Build.BuildId)"
+                
+                # Output API Gateway URL
+                APIM_URL=$(az deployment group show \
+                  --resource-group $(resourceGroupName) \
+                  --name "apim-deployment-$(Build.BuildId)" \
+                  --query properties.outputs.apimGatewayUrl.value -o tsv)
+                
+                echo "API Management Gateway URL: $APIM_URL"
+                echo "##vso[task.setvariable variable=ApimGatewayUrl]$APIM_URL"
+
 
   # - stage: DeployServices
   #   displayName: 'Deploy Services'

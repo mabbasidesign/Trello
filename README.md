@@ -110,8 +110,14 @@ This project implements a microservices-based system with two independent servic
 
 The application is deployed and running on Azure:
 
-- **Product Service API:** https://app-trello-product-prod.azurewebsites.net/swagger
-- **Order Service API:** https://app-trello-order-prod.azurewebsites.net/swagger
+- **API Gateway (Unified Endpoint):** https://[apim-gateway-url].azure-api.net
+  - **Product API:** `GET/POST/PUT/DELETE /products`
+  - **Order API:** `GET/POST/PATCH /orders`
+  - **Authentication:** Requires `Ocp-Apim-Subscription-Key` header
+
+- **Direct Service Endpoints** (for testing):
+  - **Product Service:** https://app-trello-product-prod.azurewebsites.net/swagger
+  - **Order Service:** https://app-trello-order-prod.azurewebsites.net/swagger
 
 ### Local Development with Docker
 
@@ -260,8 +266,10 @@ Fully automated Azure DevOps pipeline with 3 stages:
   - Service Bus namespace, queues, topics
   - SQL Server and databases
   - App Services
+  - API Management (APIM)
   - Key Vault (optional)
 - Deploy container images to App Services
+- Configure API Gateway routing and policies
 - Verify deployment health
 
 **Pipeline Triggers:**
@@ -388,6 +396,16 @@ The application is deployed with the following Azure resources:
   - `app-trello-product-prod` (Product microservice)
   - `app-trello-order-prod` (Order microservice)
 - **Container Registry:** trelloacr.azurecr.io (Standard SKU)
+
+### API Gateway
+- **API Management:** apim-trello-* (Consumption tier)
+  - **Gateway URL:** Unified API endpoint for all services
+  - **Developer Portal:** API documentation and testing
+  - **Products:** Unlimited (published)
+  - **Features:** Rate limiting (100 calls/min), CORS, API versioning
+  - **APIs:**
+    - Product API: `/products/*`
+    - Order API: `/orders/*`
 
 ### Data
 - **SQL Server:** sql-trello-ziutkivc6smnk.database.windows.net (West US 2)
