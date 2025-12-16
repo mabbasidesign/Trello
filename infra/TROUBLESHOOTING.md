@@ -155,7 +155,155 @@ Write-Host "`nAll providers registered. Wait 2-3 minutes before deploying." -For
 
 ---
 
-## Issue 2: SQL Server Regional Availability
+## Issue 2: APIM Backend Routing 404 Errors
+
+**Date:** December 16, 2025  
+**Resource:** API Management Gateway  
+**Status:** Resolved
+
+### Problem
+
+API Gateway returned 404 Not Found when calling endpoints through APIM, even though:
+- Subscription key was accepted (no 401 error)
+- Backend services were running and accessible directly
+- APIM deployment succeeded
+
+**Error When Testing:**
+```powershell
+$key = "7d73c2d85d3544fdaea1d4e291e10cc3"
+Invoke-RestMethod -Uri "https://apim-trello-fumbtexxi35ii.azure-api.net/products" -Headers @{"Ocp-Apim-Subscription-Key"=$key}
+
+# Result: 404 Not Found
+```
+
+**But Direct Backend Works:**
+```powershell
+Invoke-RestMethod -Uri "https://app-trello-product-prod.azurewebsites.net/api/v1/products"
+
+# Result: Returns products successfully
+```
+
+### Root Cause
+
+Incorrect `serviceUrl` configuration in APIM Bicep template.
+
+**Problem Configuration:**
+```bicep
+resource productApi 'Microsoft.ApiManagement/service/apis@2023-05-01-preview' = {
+  properties: {
+    serviceUrl: productServiceUrl  // ❌ Points to /api/v1
+    path: 'products'
+  }
+}
+```
+
+When APIM received request: `GET /products`  
+It routed to backend: `https://backend/api/v1/` (missing `/products`)  
+Backend expected: `https://backend/api/v1/products`
+
+### Solution
+
+Updated `serviceUrl` to include the full path to the backend endpoint:
+
+```bicep
+resource productApi 'Microsoft.ApiManagement/service/apis@2023-05-01-preview' = {
+  properties: {
+    serviceUrl: '${productServiceUrl}/products'  // ✅ Points to /api/v1/products
+    path: 'products'
+  }
+}
+
+resource orderApi 'Microsoft.ApiManagement/service/apis@2023-05-01-preview' = {
+  properties: {
+    serviceUrl: '${orderServiceUrl}/orders'  // ✅ Points to /api/v1/orders
+    path: 'orders'
+  }
+}
+```
+
+**Commit:** `607991a` - Fix APIM backend routing paths
+
+### How APIM Routing Works
+
+**Request Flow:**
+1. Client calls: `https://apim-gateway.net/products`
+2. APIM matches path: `products`
+3. APIM finds API with `path: 'products'`
+4. APIM takes the **remaining path** after `/products` (in this case `/`)
+5. APIM appends to `serviceUrl` and calls backend
+
+**Example:**
+- Client: `GET /products` → Backend: `GET {serviceUrl}/`
+- Client: `GET /products/123` → Backend: `GET {serviceUrl}/123`
+
+**Therefore:**
+- If `serviceUrl = https://backend/api/v1`, client `/products` → backend `/api/v1/` ❌
+- If `serviceUrl = https://backend/api/v1/products`, client `/products` → backend `/api/v1/products/` ✅
+
+### Testing Commands
+
+**Test APIM Gateway (After Fix):**
+```powershell
+# Set your subscription key
+$key = "YOUR_SUBSCRIPTION_KEY_HERE"
+
+# Test Product API
+Invoke-RestMethod -Uri "https://apim-trello-fumbtexxi35ii.azure-api.net/products" `
+  -Headers @{"Ocp-Apim-Subscription-Key"=$key}
+
+# Test Get Product by ID
+Invoke-RestMethod -Uri "https://apim-trello-fumbtexxi35ii.azure-api.net/products/1" `
+  -Headers @{"Ocp-Apim-Subscription-Key"=$key}
+
+# Test Order API
+Invoke-RestMethod -Uri "https://apim-trello-fumbtexxi35ii.azure-api.net/orders" `
+  -Headers @{"Ocp-Apim-Subscription-Key"=$key}
+```
+
+**Test Backend Directly (For Comparison):**
+```powershell
+# Product API
+Invoke-RestMethod -Uri "https://app-trello-product-prod.azurewebsites.net/api/v1/products"
+
+# Order API
+Invoke-RestMethod -Uri "https://app-trello-order-prod.azurewebsites.net/api/v1/orders"
+```
+
+**Get Subscription Key:**
+1. Azure Portal → apim-trello-fumbtexxi35ii
+2. Left menu → **Subscriptions**
+3. Click **+ Add** if no subscription exists
+   - Name: `unlimited-subscription`
+   - Scope: **Product** → **Unlimited**
+   - State: **Active**
+4. Click on the subscription
+5. Click **Show keys**
+6. Copy **Primary key**
+
+### Lesson Learned
+
+- APIM `serviceUrl` should point to the **exact backend endpoint**, not just the base URL
+- APIM routing appends the request path to `serviceUrl`
+- Always test both direct backend and APIM gateway after configuration changes
+- Use `Invoke-RestMethod` with `-Headers @{"Ocp-Apim-Subscription-Key"=$key}` for testing
+
+### Related Configuration
+
+**Pipeline Parameters (Correct):**
+```yaml
+productServiceUrl: "https://app-trello-product-prod.azurewebsites.net/api/v1"
+orderServiceUrl: "https://app-trello-order-prod.azurewebsites.net/api/v1"
+```
+
+**Bicep Usage (Fixed):**
+```bicep
+serviceUrl: '${productServiceUrl}/products'  // Full path
+serviceUrl: '${orderServiceUrl}/orders'      // Full path
+```
+
+---
+
+## Issue 3: SQL Server Regional Availability
 
 **Date:** December 2025  
 **Resource:** SQL Server  
@@ -192,7 +340,7 @@ The subscription does not have sufficient capacity for the requested operation i
 
 ---
 
-## Issue 3: Swagger API Version Placeholder Not Substituting
+## Issue 4: Swagger API Version Placeholder Not Substituting
 
 **Date:** December 2025  
 **Resource:** Product Service, Order Service  
@@ -232,7 +380,7 @@ builder.Services.AddApiVersioning(options =>
 
 ---
 
-## Issue 4: Package Version Conflicts
+## Issue 5: Package Version Conflicts
 
 **Date:** December 2025  
 **Resources:** Product Service, Order Service  
@@ -266,7 +414,7 @@ builder.Services.AddApiVersioning(options =>
 
 ---
 
-## Issue 5: Hardcoded Passwords in Source Code
+## Issue 6: Hardcoded Passwords in Source Code
 
 **Date:** December 2025  
 **Status:** Resolved  
