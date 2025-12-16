@@ -29,7 +29,7 @@ resource productApi 'Microsoft.ApiManagement/service/apis@2023-05-01-preview' = 
     apiRevision: '1'
     description: 'Product microservice API'
     subscriptionRequired: true
-    serviceUrl: productServiceUrl
+    serviceUrl: '${productServiceUrl}/products'
     path: 'products'
     protocols: [
       'https'
@@ -120,7 +120,7 @@ resource orderApi 'Microsoft.ApiManagement/service/apis@2023-05-01-preview' = {
     apiRevision: '1'
     description: 'Order microservice API'
     subscriptionRequired: true
-    serviceUrl: orderServiceUrl
+    serviceUrl: '${orderServiceUrl}/orders'
     path: 'orders'
     protocols: [
       'https'
