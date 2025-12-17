@@ -79,7 +79,6 @@ az provider show --namespace Microsoft.ApiManagement --query "registrationState"
 # Login first
 az login
 
-# Register provider
 az provider register --namespace Microsoft.ApiManagement
 
 # Verify
@@ -89,11 +88,8 @@ az provider list --query "[?namespace=='Microsoft.ApiManagement'].{Namespace:nam
 #### Timeline of Occurrences
 
 1. **First Deployment** - All core providers needed registration:
-   - Microsoft.Sql
-   - Microsoft.ServiceBus
    - Microsoft.Web
    - Microsoft.ContainerRegistry
-
 2. **APIM Deployment (December 16, 2025, 19:56 UTC)** - API Management provider:
    - Error occurred in pipeline Stage 3: DeployInfrastructure
    - Build ID: 25
@@ -104,9 +100,6 @@ az provider list --query "[?namespace=='Microsoft.ApiManagement'].{Namespace:nam
 **Before deploying new resource types, register the provider:**
 
 | Resource Type | Provider Namespace | Registration Command |
-|---------------|-------------------|---------------------|
-| Azure Functions | Microsoft.Web | Already registered via App Services |
-| Application Insights | Microsoft.Insights | `az provider register --namespace Microsoft.Insights` |
 | Key Vault | Microsoft.KeyVault | `az provider register --namespace Microsoft.KeyVault` |
 | Cosmos DB | Microsoft.DocumentDB | `az provider register --namespace Microsoft.DocumentDB` |
 | Redis Cache | Microsoft.Cache | `az provider register --namespace Microsoft.Cache` |
@@ -115,9 +108,6 @@ az provider list --query "[?namespace=='Microsoft.ApiManagement'].{Namespace:nam
 
 #### After Registration
 
-1. **Wait 1-2 minutes** for registration to complete
-2. **Re-run failed deployment**:
-   - Manually trigger pipeline in Azure DevOps, OR
    - Push empty commit: `git commit --allow-empty -m "Retry after provider registration"; git push`
 3. **Verify deployment succeeds**
 4. **Check Azure Portal** for created resources
@@ -133,9 +123,7 @@ az provider list --query "[?namespace=='Microsoft.ApiManagement'].{Namespace:nam
 
 Create a PowerShell script to register all required providers:
 
-```powershell
 # infra/register-providers.ps1
-$providers = @(
     'Microsoft.Sql',
     'Microsoft.ServiceBus',
     'Microsoft.Web',
