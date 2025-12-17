@@ -9,7 +9,7 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Development}
       - ASPNETCORE_URLS=http://+:8080
-      - ConnectionStrings__DefaultSQLConnection=Server=${SQL_SERVER:-sqlserver};Database=TrelloProducts;User Id=${SQL_USER:-sa};Password=${SQL_PASSWORD};TrustServerCertificate=true;MultipleActiveResultSets=True
+      - ConnectionStrings__DefaultSQLConnection=Server=${SQL_SERVER:-trello-sqlserver};Database=TrelloProducts;User Id=${SQL_USER:-sa};Password=${SQL_PASSWORD:-YourStrong@Passw0rd};TrustServerCertificate=true;MultipleActiveResultSets=True
       - ServiceBus__ConnectionString=${SERVICEBUS_CONNECTION_STRING}
       - ServiceBus__ProductsQueue=products
       - ServiceBus__OrdersQueue=orders

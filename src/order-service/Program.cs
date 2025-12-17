@@ -58,6 +58,13 @@ builder.Services.AddSwaggerGen(options =>
         Description = "A REST API for managing orders in the Trello system (Version 1.0)"
     });
 });
+
+// Configure JSON serialization to handle circular references
+builder.Services.ConfigureHttpJsonOptions(options =>
+{
+    options.SerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+});
+
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 
 // Add Service Bus Publisher (optional - only if connection string is configured)
