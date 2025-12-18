@@ -519,7 +519,7 @@ const fetchProducts = async () => {
 
 ### 1. Protect Your Subscription Key
 
-❌ **Don't:**
+❌, **Don't:**
 - Commit keys to Git
 - Share keys in public documentation
 - Use same key for all environments
