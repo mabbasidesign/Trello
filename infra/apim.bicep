@@ -295,8 +295,38 @@ resource orderApiPolicy 'Microsoft.ApiManagement/service/apis/policies@2023-05-0
   }
 }
 
+
+// Application Insights for Product Service
+resource productAppInsights 'Microsoft.Insights/components@2020-02-02' = {
+  name: 'appinsights-product'
+  location: location
+  kind: 'web'
+  properties: {
+    Application_Type: 'web'
+  }
+}
+
+// Example: output instrumentation key (deprecated, but still used by some SDKs)
+output productAppInsightsInstrumentationKey string = productAppInsights.properties.InstrumentationKey
+output productAppInsightsConnectionString string = productAppInsights.properties.ConnectionString
+
+// Add Application Insights instrumentation key as an app setting for product service
+// NOTE: Replace 'product-service-app' with your actual product service App Service resource name if different
+resource productServiceApp 'Microsoft.Web/sites@2022-09-01' existing = {
+  name: 'app-trello-product-prod'
+}
+
+resource productServiceAppSettings 'Microsoft.Web/sites/config@2022-09-01' = {
+  parent: productServiceApp
+  name: 'appsettings'
+  properties: {
+    'APPINSIGHTS_INSTRUMENTATIONKEY': productAppInsights.properties.InstrumentationKey
+    'APPLICATIONINSIGHTS_CONNECTION_STRING': productAppInsights.properties.ConnectionString
+  }
+}
+
 output apimName string = apim.name
 output apimGatewayUrl string = apim.properties.gatewayUrl
-output apimDeveloperPortalUrl string = apim.properties.developerPortalUrl
+// output apimDeveloperPortalUrl string = apim.properties.developerPortalUrl
 output productApiPath string = 'https://${apim.properties.gatewayUrl}/products'
 output orderApiPath string = 'https://${apim.properties.gatewayUrl}/orders'
