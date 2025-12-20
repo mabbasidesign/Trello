@@ -43,6 +43,7 @@ services:
       - trello-network
     restart: unless-stopped
 
+
   order-service:
     build:
       context: ../src/order-service
@@ -61,6 +62,23 @@ services:
     depends_on:
       sqlserver:
         condition: service_healthy
+    networks:
+      - trello-network
+    restart: unless-stopped
+
+  inventory-service:
+    build:
+      context: ../src/inventory-service
+      dockerfile: Dockerfile
+    container_name: inventory-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - CosmosDb__ConnectionString=${COSMOSDB_CONNECTION_STRING:-}
+      - CosmosDb__DatabaseId=InventoryDb
+      - CosmosDb__ContainerId=InventoryItems
+    ports:
+      - "5400:8080"
     networks:
       - trello-network
     restart: unless-stopped
