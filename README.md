@@ -146,15 +146,33 @@ The application is deployed and running on Azure:
    docker-compose -f docker-compose.infrastructure.yml up -d
    ```
 
+
 5. **Start the services**
-   ```powershell
-   docker-compose -f docker-compose.product.yml up -d --build
-   docker-compose -f docker-compose.order.yml up -d --build
-   ```
+  ```powershell
+  docker-compose up -d --build
+  ```
 
 6. **Access the services**
-   - Product Service: http://localhost:5217/swagger
-   - Order Service: http://localhost:5037/swagger
+  - Product Service: http://localhost:5217/swagger
+  - Order Service: http://localhost:5037/swagger
+  - Inventory Service: http://localhost:5400/swagger
+
+**Environment Variables for Inventory Service:**
+  - CosmosDb__ConnectionString: Set your Cosmos DB connection string
+  - CosmosDb__DatabaseId: InventoryDb
+  - CosmosDb__ContainerId: InventoryItems
+
+**Build and run inventory-service only:**
+```powershell
+cd src/inventory-service
+docker build -t inventory-service .
+docker run -d -p 5400:8080 --name inventory-service \
+  -e ASPNETCORE_ENVIRONMENT=Development \
+  -e CosmosDb__ConnectionString=<your-connection-string> \
+  -e CosmosDb__DatabaseId=InventoryDb \
+  -e CosmosDb__ContainerId=InventoryItems \
+  inventory-service
+```
 
 ### Local Development with .NET
 
