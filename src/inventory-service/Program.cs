@@ -2,27 +2,34 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using InventoryService.Models;
+using InventoryService.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddSingleton<IInventoryRepository, InventoryRepository>();
 var app = builder.Build();
 
-var inventory = new List<InventoryItem>();
+var repo = app.Services.GetRequiredService<IInventoryRepository>();
 
-app.MapGet("/inventory", () => inventory);
-app.MapGet("/inventory/{id}", (string id) => inventory.FirstOrDefault(i => i.Id == id) is InventoryItem item ? Results.Ok(item) : Results.NotFound());
-app.MapPost("/inventory", (InventoryItem item) => { inventory.Add(item); return Results.Created($"/inventory/{item.Id}", item); });
-app.MapPut("/inventory/{id}", (string id, InventoryItem updated) => {
-    var item = inventory.FirstOrDefault(i => i.Id == id);
-    if (item is null) return Results.NotFound();
-    item.ProductName = updated.ProductName;
-    item.Quantity = updated.Quantity;
-    item.Location = updated.Location;
+app.MapGet("/inventory", async () => await repo.GetAllAsync());
+app.MapGet("/inventory/{id}", async (string id) => {
+    var item = await repo.GetByIdAsync(id);
+    return item is not null ? Results.Ok(item) : Results.NotFound();
+});
+app.MapPost("/inventory", async (InventoryItem item) => {
+    await repo.AddAsync(item);
+    return Results.Created($"/inventory/{item.Id}", item);
+});
+app.MapPut("/inventory/{id}", async (string id, InventoryItem updated) => {
+    var existing = await repo.GetByIdAsync(id);
+    if (existing is null) return Results.NotFound();
+    updated.Id = id;
+    await repo.UpdateAsync(updated);
     return Results.NoContent();
 });
-app.MapDelete("/inventory/{id}", (string id) => {
-    var item = inventory.FirstOrDefault(i => i.Id == id);
-    if (item is null) return Results.NotFound();
-    inventory.Remove(item);
+app.MapDelete("/inventory/{id}", async (string id) => {
+    var existing = await repo.GetByIdAsync(id);
+    if (existing is null) return Results.NotFound();
+    await repo.DeleteAsync(id);
     return Results.NoContent();
 });
 
