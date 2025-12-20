@@ -16,22 +16,10 @@ var app = builder.Build();
 
 var repo = app.Services.GetRequiredService<IInventoryRepository>();
 
-// Seed initial data
-await repo.AddAsync(new InventoryItem {
-    ProductName = "Laptop",
-    Quantity = 10,
-    Location = "Warehouse A"
-});
-await repo.AddAsync(new InventoryItem {
-    ProductName = "Mouse",
-    Quantity = 50,
-    Location = "Warehouse B"
-});
-await repo.AddAsync(new InventoryItem {
-    ProductName = "Keyboard",
-    Quantity = 30,
-    Location = "Warehouse A"
-});
+// Seed initial data (synchronously)
+repo.AddAsync(new InventoryItem { ProductName = "Laptop", Quantity = 10, Location = "Warehouse A" }).Wait();
+repo.AddAsync(new InventoryItem { ProductName = "Mouse", Quantity = 50, Location = "Warehouse B" }).Wait();
+repo.AddAsync(new InventoryItem { ProductName = "Keyboard", Quantity = 30, Location = "Warehouse A" }).Wait();
 
 app.UseSwagger();
 app.UseSwaggerUI();
