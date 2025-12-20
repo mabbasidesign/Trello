@@ -8,10 +8,33 @@ using InventoryService.DTOs;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddSingleton<IInventoryRepository, InventoryRepository>();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 var app = builder.Build();
 
 
+
 var repo = app.Services.GetRequiredService<IInventoryRepository>();
+
+// Seed initial data
+await repo.AddAsync(new InventoryItem {
+    ProductName = "Laptop",
+    Quantity = 10,
+    Location = "Warehouse A"
+});
+await repo.AddAsync(new InventoryItem {
+    ProductName = "Mouse",
+    Quantity = 50,
+    Location = "Warehouse B"
+});
+await repo.AddAsync(new InventoryItem {
+    ProductName = "Keyboard",
+    Quantity = 30,
+    Location = "Warehouse A"
+});
+
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.MapGet("/inventory", async () =>
     (await repo.GetAllAsync()).Select(ToDto)
