@@ -4,22 +4,26 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using InventoryService.Models;
 using InventoryService.Repositories;
+using Microsoft.Azure.Cosmos;
 using InventoryService.DTOs;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddSingleton<IInventoryRepository, InventoryRepository>();
+
+// Cosmos DB configuration
+var cosmosConnectionString = builder.Configuration["CosmosDb:ConnectionString"] ?? "<YOUR_COSMOS_CONNECTION_STRING>";
+var databaseId = builder.Configuration["CosmosDb:DatabaseId"] ?? "InventoryDb";
+var containerId = builder.Configuration["CosmosDb:ContainerId"] ?? "InventoryItems";
+
+builder.Services.AddSingleton<IInventoryRepository>(sp => {
+    var client = new CosmosClient(cosmosConnectionString);
+    return new CosmosDbInventoryRepository(client, databaseId, containerId);
+});
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 var app = builder.Build();
 
-
-
 var repo = app.Services.GetRequiredService<IInventoryRepository>();
-
-// Seed initial data (synchronously)
-repo.AddAsync(new InventoryItem { ProductName = "Laptop", Quantity = 10, Location = "Warehouse A" }).Wait();
-repo.AddAsync(new InventoryItem { ProductName = "Mouse", Quantity = 50, Location = "Warehouse B" }).Wait();
-repo.AddAsync(new InventoryItem { ProductName = "Keyboard", Quantity = 30, Location = "Warehouse A" }).Wait();
 
 app.UseSwagger();
 app.UseSwaggerUI();
