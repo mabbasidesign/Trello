@@ -136,12 +136,34 @@ stages:
                 $(tag)
                 latest
               buildContext: '$(Build.SourcesDirectory)/src/order-service'
-          
+
           - task: Docker@2
             displayName: 'Push Order Service Image'
             inputs:
               command: 'push'
               repository: '$(imageRepository)-order'
+              containerRegistry: $(dockerRegistryServiceConnection)
+              tags: |
+                $(tag)
+                latest
+
+          - task: Docker@2
+            displayName: 'Build Inventory Service Image'
+            inputs:
+              command: 'build'
+              repository: '$(imageRepository)-inventory'
+              dockerfile: 'src/inventory-service/Dockerfile'
+              containerRegistry: $(dockerRegistryServiceConnection)
+              tags: |
+                $(tag)
+                latest
+              buildContext: '$(Build.SourcesDirectory)/src/inventory-service'
+
+          - task: Docker@2
+            displayName: 'Push Inventory Service Image'
+            inputs:
+              command: 'push'
+              repository: '$(imageRepository)-inventory'
               containerRegistry: $(dockerRegistryServiceConnection)
               tags: |
                 $(tag)
