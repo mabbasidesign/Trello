@@ -41,6 +41,11 @@ param productDbConnectionString string
 @secure()
 param orderDbConnectionString string
 
+
+@description('Cosmos DB Connection String')
+@secure()
+param cosmosDbConnectionString string
+
 @description('Docker image tag')
 param imageTag string = 'latest'
 
@@ -177,4 +182,57 @@ resource orderAppService 'Microsoft.Web/sites@2022-09-01' = {
 output productAppServiceName string = productAppService.name
 output productAppServiceUrl string = 'https://${productAppService.properties.defaultHostName}'
 output orderAppServiceName string = orderAppService.name
-output orderAppServiceUrl string = 'https://${orderAppService.properties.defaultHostName}'
+
+// Inventory Service App Service
+resource inventoryAppService 'Microsoft.Web/sites@2022-09-01' = {
+  name: 'app-trello-inventory-prod'
+  location: location
+  kind: 'app,linux,container'
+  properties: {
+    serverFarmId: appServicePlan.id
+    siteConfig: {
+      linuxFxVersion: 'DOCKER|${containerRegistryUrl}/trello-microservices-inventory:${imageTag}'
+      appCommandLine: ''
+      alwaysOn: true
+      ftpsState: 'Disabled'
+      httpLoggingEnabled: true
+      logsDirectorySizeLimit: 35
+      detailedErrorLoggingEnabled: true
+      appSettings: [
+        {
+          name: 'DOCKER_REGISTRY_SERVER_URL'
+          value: 'https://${containerRegistryUrl}'
+        }
+        {
+          name: 'DOCKER_REGISTRY_SERVER_USERNAME'
+          value: containerRegistryUsername
+        }
+        {
+          name: 'DOCKER_REGISTRY_SERVER_PASSWORD'
+          value: containerRegistryPassword
+        }
+        {
+          name: 'WEBSITES_ENABLE_APP_SERVICE_STORAGE'
+          value: 'false'
+        }
+        {
+          name: 'ASPNETCORE_ENVIRONMENT'
+          value: 'Production'
+        }
+        {
+          name: 'CosmosDb__ConnectionString'
+          value: cosmosDbConnectionString
+        }
+        {
+          name: 'ASPNETCORE_HTTP_PORTS'
+          value: '8080'
+        }
+      ]
+    }
+    httpsOnly: true
+    clientAffinityEnabled: false
+  }
+}
+
+output inventoryAppServiceName string = inventoryAppService.name
+output inventoryAppServiceUrl string = 'https://${inventoryAppService.properties.defaultHostName}'

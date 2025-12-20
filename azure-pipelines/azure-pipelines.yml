@@ -235,6 +235,12 @@ stages:
                   --name "sqlserver-deployment-$(Build.BuildId)" \
                   --query properties.outputs.orderConnectionString.value -o tsv)
                 
+                # Get Cosmos DB connection string from deployment outputs
+                COSMOSDB_CONN=$(az deployment group show \
+                  --resource-group $(resourceGroupName) \
+                  --name "cosmosdb-deployment-$(Build.BuildId)" \
+                  --query properties.outputs.cosmosDbConnectionString.value -o tsv)
+
                 # Deploy App Services
                 az deployment group create \
                   --resource-group $(resourceGroupName) \
@@ -245,6 +251,7 @@ stages:
                     serviceBusConnectionString="$SERVICEBUS_CONN" \
                     productDbConnectionString="$PRODUCT_DB_CONN" \
                     orderDbConnectionString="$ORDER_DB_CONN" \
+                    cosmosDbConnectionString="$COSMOSDB_CONN" \
                     imageTag="$(tag)" \
                   --name "appservices-deployment-$(Build.BuildId)"
           
