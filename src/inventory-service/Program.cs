@@ -1,4 +1,5 @@
 
+
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -6,11 +7,11 @@ using InventoryService.Models;
 using InventoryService.Repositories;
 using Microsoft.Azure.Cosmos;
 using InventoryService.DTOs;
+using Azure.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Cosmos DB configuration (Managed Identity)
-using Azure.Identity;
 var accountEndpoint = builder.Configuration["CosmosDb:AccountEndpoint"] ?? "<YOUR_COSMOS_ACCOUNT_ENDPOINT>";
 var databaseId = builder.Configuration["CosmosDb:DatabaseId"] ?? "InventoryDb";
 var containerId = builder.Configuration["CosmosDb:ContainerId"] ?? "InventoryItems";
