@@ -1,3 +1,24 @@
+# Cosmos DB Deployment Fails: Missing Provider Registration
+
+**Symptom:**
+Deployment fails with an error like:
+```
+The subscription is not registered to use namespace 'Microsoft.DocumentDB'.
+```
+
+**Solution:**
+1. Register the provider using Azure CLI:
+  ```
+  az provider register --namespace Microsoft.DocumentDB
+  ```
+2. Wait a few minutes, then check status:
+  ```
+  az provider show -n Microsoft.DocumentDB --query "registrationState"
+  ```
+  It should return `"Registered"`.
+3. Re-run your deployment or pipeline.
+
+**Note:** This is a one-time action per subscription.
 # Azure Deployment Issues & Solutions
 
 This document records issues encountered during Azure deployments and their solutions.
