@@ -247,12 +247,32 @@ This project implements a **3-tier security model** following Azure best practic
 - **Configuration:** Already initialized in both `.csproj` files
 - **Secrets:** Database connection strings
 
-### 3. Azure Production (Key Vault)
-- **Resource:** `kv-Trello-key`
-- **Authentication:** Managed Identity (password-less)
-- **Access Control:** RBAC with audit logging
-- **Secrets:** SQL passwords, Service Bus connection strings
-- **Integration:** App Services configured to reference Key Vault
+
+### 3. Azure Production (Cosmos DB Connection String Automation)
+- **Resource:** Cosmos DB connection string is output from Bicep deployment.
+- **Pipeline:** Azure DevOps pipeline automatically extracts the connection string and passes it to App Service as an app setting (CosmosDb__ConnectionString).
+- **No manual secret entry required:** The connection string is securely handled end-to-end by the pipeline and Bicep outputs.
+- **Key Vault (optional, recommended):**
+  - For extra security, save the Cosmos DB connection string as a secret in Azure Key Vault.
+  - Reference the secret in App Service settings using a Key Vault reference (e.g., `@Microsoft.KeyVault(SecretUri=...)`).
+  - Managed Identity and RBAC control access and audit logging.
+  - Centralized secret rotation and audit logs.
+
+### Cosmos DB Connection String Management
+- **Production:**
+  - By default, the pipeline wires the Cosmos DB connection string from Bicep to App Service automatically.
+  - For best security, store the connection string in Key Vault and reference it in App Service settings.
+- **Development:**
+  - Use a `.env` file for Docker Compose or `.NET user-secrets` for local development.
+  - Never commit the actual connection string to source control.
+  - Example for user-secrets:
+    ```powershell
+    dotnet user-secrets set "CosmosDb:ConnectionString" "your-local-cosmos-connection-string"
+    ```
+  - Example for .env:
+    ```env
+    CosmosDb__ConnectionString=your-local-cosmos-connection-string
+    ```
 
 **Security Features:**
 - No hardcoded passwords in source code

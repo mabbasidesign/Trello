@@ -207,6 +207,18 @@ stages:
                   --name "sqlserver-deployment-$(Build.BuildId)"
           
           - task: AzureCLI@2
+            displayName: 'Deploy Cosmos DB Infrastructure'
+            inputs:
+              azureSubscription: $(azureSubscription)
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                az deployment group create \
+                  --resource-group $(resourceGroupName) \
+                  --template-file $(Build.SourcesDirectory)/infra/cosmosdb.bicep \
+                  --name "cosmosdb-deployment-$(Build.BuildId)"
+
+          - task: AzureCLI@2
             displayName: 'Deploy App Services'
             inputs:
               azureSubscription: $(azureSubscription)

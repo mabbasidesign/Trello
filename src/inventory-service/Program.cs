@@ -9,13 +9,14 @@ using InventoryService.DTOs;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Cosmos DB configuration
-var cosmosConnectionString = builder.Configuration["CosmosDb:ConnectionString"] ?? "<YOUR_COSMOS_CONNECTION_STRING>";
+// Cosmos DB configuration (Managed Identity)
+using Azure.Identity;
+var accountEndpoint = builder.Configuration["CosmosDb:AccountEndpoint"] ?? "<YOUR_COSMOS_ACCOUNT_ENDPOINT>";
 var databaseId = builder.Configuration["CosmosDb:DatabaseId"] ?? "InventoryDb";
 var containerId = builder.Configuration["CosmosDb:ContainerId"] ?? "InventoryItems";
 
 builder.Services.AddSingleton<IInventoryRepository>(sp => {
-    var client = new CosmosClient(cosmosConnectionString);
+    var client = new CosmosClient(accountEndpoint, new DefaultAzureCredential());
     return new CosmosDbInventoryRepository(client, databaseId, containerId);
 });
 
