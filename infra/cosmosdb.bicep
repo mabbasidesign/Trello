@@ -1,4 +1,4 @@
-param location string = resourceGroup().location
+param location string = 'eastus'
 param accountName string = uniqueString(resourceGroup().id, 'inventory-cosmos')
 param databaseName string = 'InventoryDb'
 param containerName string = 'InventoryItems'
