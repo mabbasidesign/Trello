@@ -4,7 +4,7 @@ targetScope = 'subscription'
 param resourceGroupName string = 'rg-trello-microservices'
 
 @description('The location for all resources')
-param location string = 'eastus'
+param location string = 'westus'
 
 @description('The environment name (dev, staging, prod)')
 @allowed([
