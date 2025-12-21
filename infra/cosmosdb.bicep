@@ -1,5 +1,5 @@
 param location string = 'eastus'
-param accountName string = uniqueString(resourceGroup().id, 'inventory-cosmos')
+param accountName string = 'inventory-cosmos-${uniqueString(resourceGroup().id, utcNow())}'
 param databaseName string = 'InventoryDb'
 param containerName string = 'InventoryItems'
 

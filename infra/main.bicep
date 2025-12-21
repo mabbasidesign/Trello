@@ -50,5 +50,28 @@ output serviceBusConnectionString string = serviceBus.outputs.serviceBusConnecti
 @description('The Service Bus namespace name')
 output serviceBusNamespaceName string = serviceBus.outputs.serviceBusNamespaceName
 
+
+// Deploy Cosmos DB
+module cosmosDb 'cosmosdb.bicep' = {
+  scope: resourceGroup
+  name: 'cosmosDbDeployment'
+  params: {
+    location: location
+    accountName: 'inventory-cosmos-${uniqueString(resourceGroup().id, utcNow())}'
+  }
+}
+
+@description('The Cosmos DB account name')
+output cosmosDbAccountName string = cosmosDb.outputs.cosmosDbAccountName
+
+@description('The Cosmos DB database name')
+output cosmosDbDatabaseName string = cosmosDb.outputs.cosmosDbDatabaseName
+
+@description('The Cosmos DB container name')
+output cosmosDbContainerName string = cosmosDb.outputs.cosmosDbContainerName
+
+@description('The Cosmos DB connection string')
+output cosmosDbConnectionString string = cosmosDb.outputs.cosmosDbConnectionString
+
 @description('The resource group name')
 output resourceGroupName string = resourceGroup.name
