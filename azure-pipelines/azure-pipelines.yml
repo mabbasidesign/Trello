@@ -31,7 +31,7 @@ variables:
   # Azure Resources
   azureSubscription: 'TrelloAzureSubscription'
   resourceGroupName: 'rg-trello-microservices'
-  location: 'canadaeast'
+  location: 'westus'
 
 stages:
   - stage: Build
