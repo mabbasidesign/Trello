@@ -1,5 +1,8 @@
 # Trello Microservices
 
+<img width="800" height="684" alt="Azure Diagram " src="https://github.com/user-attachments/assets/8f398772-4b97-43ac-ba13-87194b0701da" />
+
+
 A production-ready microservices architecture built with .NET 10.0, demonstrating modern cloud-native development practices including event-driven communication, containerization, automated CI/CD, and enterprise-grade security.
 
 ## Architecture
